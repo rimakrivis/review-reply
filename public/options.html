@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ReviewReply Settings</title>
+  <link rel="stylesheet" href="ui.css" />
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main>
+    <header class="row">
+      <h1 class="grow">✨ ReviewReply settings</h1>
+      <span id="saved" class="muted" aria-live="polite"></span>
+    </header>
+
+    <section class="card">
+      <h2>1. OpenAI connection</h2>
+      <label for="api-key">API key <small>stored only in this browser, sent only to OpenAI</small></label>
+      <div class="row">
+        <input id="api-key" class="grow" type="password" placeholder="sk-..." autocomplete="off" spellcheck="false" />
+        <button id="toggle-key" type="button">Show</button>
+      </div>
+      <p class="muted small">Create one at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a>. Set a monthly spending limit there too.</p>
+      <label for="model">Model</label>
+      <div class="row">
+        <select id="model" class="grow"></select>
+        <input id="custom-model" class="grow" placeholder="custom model id, e.g. gpt-5.4-nano" hidden />
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="test" type="button">Test connection</button>
+        <span id="test-result" class="small"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. Business profiles</h2>
+      <p class="muted small">One profile per business. The side panel and the Google page use the active one.</p>
+      <div class="row">
+        <select id="profile" class="grow" aria-label="Profile"></select>
+        <button id="duplicate" type="button">Duplicate</button>
+        <button id="export" type="button">Export</button>
+        <button id="delete" type="button" class="danger">Delete</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <select id="template" class="grow" aria-label="Business type template"></select>
+        <button id="add" type="button" class="primary">+ New profile</button>
+        <button id="import" type="button">Import…</button>
+        <input id="import-file" type="file" accept="application/json,.json" hidden />
+      </div>
+      <div id="profile-msg" class="notice" hidden></div>
+    </section>
+
+    <section id="editor" class="card" hidden>
+      <h2>3. About the business</h2>
+      <div class="grid">
+        <div><label for="f-businessName">Business name</label><input id="f-businessName" data-field="businessName" /></div>
+        <div><label for="f-businessType">Type</label><input id="f-businessType" data-field="businessType" placeholder="Bar, Restaurant, Hotel…" /></div>
+      </div>
+      <label for="f-signature">Signature <small>added at the end of every reply, optional</small></label>
+      <input id="f-signature" data-field="signature" placeholder="— The team at …" />
+      <label for="f-tone">Tone of voice</label>
+      <textarea id="f-tone" data-field="tone" rows="2"></textarea>
+      <label for="f-facts">Facts the AI may use <small>hours, complaint email, booking link, happy hour, events</small></label>
+      <textarea id="f-facts" data-field="facts" rows="4" placeholder="Complaints: hello@example.com&#10;Open Wed–Sun from 18:00&#10;Happy hour 18:00–20:00"></textarea>
+      <label for="f-rules">Rules for every reply <small>one per line</small></label>
+      <textarea id="f-rules" data-field="rules" rows="8"></textarea>
+    </section>
+
+    <section id="situations-card" class="card" hidden>
+      <div class="row">
+        <h2 class="grow">4. Situations playbook</h2>
+        <button id="add-situation" type="button">+ Add situation</button>
+      </div>
+      <p class="muted small">The AI picks the situation that best matches a review and follows its guidance. Order does not matter.</p>
+      <div id="situations"></div>
+    </section>
+
+    <p class="muted small center">Try it without a Google account on the <a href="demo.html" target="_blank">demo review page</a>.</p>
+  </main>
+
+  <template id="situation-tpl">
+    <details class="situation">
+      <summary><span class="s-title"></span></summary>
+      <label>Name</label><input data-s="name" />
+      <label>How to recognise it</label><textarea data-s="recognize" rows="2"></textarea>
+      <label>How to respond</label><textarea data-s="respond" rows="3"></textarea>
+      <label>Never say <small>optional</small></label><textarea data-s="avoid" rows="2"></textarea>
+      <label>Example reply <small>optional, in your voice</small></label><textarea data-s="example" rows="3"></textarea>
+      <div class="row" style="margin-top:10px"><button type="button" class="danger" data-remove>Remove situation</button></div>
+    </details>
+  </template>
+
+  <script src="options.js"></script>
+</body>
+</html>

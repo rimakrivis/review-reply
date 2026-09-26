@@ -1,0 +1,15 @@
+main { max-width: 680px; margin: 0 auto; padding: 24px 16px 48px; }
+header p { margin: 4px 0 16px; }
+.review { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.who { display: flex; gap: 10px; align-items: center; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #fff; flex: none; }
+.name { font-weight: 600; }
+.meta { display: flex; gap: 8px; align-items: center; margin: 8px 0 6px; font-size: 13px; }
+.stars { color: #f59e0b; letter-spacing: 1px; }
+.text { margin: 0; white-space: pre-line; }
+.owner { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--bg); border-radius: 0 8px 8px 0; font-size: 13px; }
+.owner-title { font-weight: 600; }
+.reply-box { margin-top: 12px; }
+.reply-box textarea { min-height: 110px; }
+.actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+.link { background: none; border: none; color: var(--accent); padding: 4px 0; font-weight: 600; margin-top: 8px; }
