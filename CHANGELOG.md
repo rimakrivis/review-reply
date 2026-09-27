@@ -4,6 +4,14 @@ All notable changes to ReviewReply are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-09-27
+
+### Changed
+- The extension now has a fixed ID (`mhgdpnpekmacppmkfjoaadamkboblpgb`), set by a `key` in the manifest. Future
+  updates keep your saved profiles even when the new version is unzipped into a different folder.
+- **One-time step when updating to 0.2.1:** export your business profiles in Settings first and copy your API key.
+  Because the ID changes this one time, Chrome starts 0.2.1 with empty settings. Import the profiles afterwards.
+
 ## [0.2.0] - 2026-09-27
 
 ### Added
@@ -28,5 +36,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - First release: AI-drafted replies to Google reviews, business profiles with a situations playbook, templates,
   side panel, settings page and demo page.
 
+[0.2.1]: https://github.com/rimakrivis/review-reply/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/rimakrivis/review-reply/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rimakrivis/review-reply/releases/tag/v0.1.0

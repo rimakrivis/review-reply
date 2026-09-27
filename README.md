@@ -129,6 +129,16 @@ npm run build
 
 After code changes, run `npm run build` and click the reload icon on the extension card. `npm run watch` rebuilds on every save.
 
+### Updating to a new version
+
+The extension has a fixed ID, set by the `key` in [public/manifest.json](public/manifest.json), so Chrome recognises every version as the same extension and keeps your settings.
+
+1. Download the new release zip and unzip it. Any folder works, but keeping one permanent folder is tidiest.
+2. Open `chrome://extensions` and click **Load unpacked** on the new folder. Chrome replaces the old version.
+3. Do **not** click **Remove** on the old version first. Removing an extension deletes its saved settings.
+
+As a backup, export your business profiles in Settings before updating.
+
 ## Choosing a model
 
 The model is a setting. Any OpenAI chat model id works through "Other model…".
