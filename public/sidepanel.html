@@ -8,59 +8,49 @@
   <link rel="stylesheet" href="sidepanel.css" />
 </head>
 <body>
-  <header class="row">
-    <h1 class="grow">✨ ReviewReply</h1>
-    <a href="#" id="open-settings">Settings</a>
-  </header>
+  <main>
+    <header class="row">
+      <h1 class="grow">✨ ReviewReply</h1>
+      <button id="open-full" type="button" title="Open in a full browser tab">⤢ Full view</button>
+      <a href="#" data-open-settings>⚙️ Settings</a>
+    </header>
 
-  <div id="setup" class="notice warn" hidden></div>
+    <div id="left-tip" class="notice tip" hidden>
+      <span class="grow">Want this panel on the left? In Chrome, open <b>Settings → Appearance → Side panel</b> and choose <b>Show on left</b>.</span>
+      <button id="dismiss-tip" type="button" class="icon" aria-label="Dismiss tip">✕</button>
+    </div>
 
-  <label for="profile">Business</label>
-  <select id="profile"></select>
+    <div id="setup" class="notice warn" hidden></div>
 
-  <section class="card">
-    <h2>Review</h2>
-    <div class="row">
-      <div class="grow">
-        <label for="name">Reviewer name <small>(optional)</small></label>
-        <input id="name" placeholder="e.g. Anna K." autocomplete="off" />
+    <div class="row business">
+      <label for="profile">Business</label>
+      <select id="profile" class="grow"></select>
+    </div>
+
+    <section id="panel-profile" class="stack">
+      <div id="profile-empty" class="notice warn" hidden>
+        No business profile yet. <a href="#" data-open-settings>Create one in Settings</a>.
       </div>
-      <div>
-        <label for="rating">Stars</label>
-        <select id="rating">
-          <option value="0">Unknown</option>
-          <option value="5">★★★★★ 5</option>
-          <option value="4">★★★★ 4</option>
-          <option value="3">★★★ 3</option>
-          <option value="2">★★ 2</option>
-          <option value="1">★ 1</option>
-        </select>
-      </div>
-    </div>
-    <label for="review">Review text</label>
-    <textarea id="review" rows="6" placeholder="Paste the review here, or select it on any page, right-click and choose &quot;Draft a reply to this review&quot;."></textarea>
-    <div class="row" style="margin-top:10px">
-      <button id="draft" class="primary">✨ Draft reply</button>
-      <button id="clear">Clear</button>
-    </div>
-  </section>
 
-  <div id="error" class="notice error" role="alert" hidden></div>
-
-  <section id="result" class="card" hidden>
-    <div class="row">
-      <h2 class="grow">Draft</h2>
-      <span id="situation" class="badge"></span>
-    </div>
-    <textarea id="reply" rows="7" aria-label="Draft reply"></textarea>
-    <div class="row" style="margin-top:10px">
-      <button id="copy" class="primary">Copy</button>
-      <button data-v="shorter">Shorter</button>
-      <button data-v="warmer">Warmer</button>
-      <button data-v="regenerate">Try again</button>
-    </div>
-    <p class="muted small">Edit if needed, then paste it into Google and post it yourself.</p>
-  </section>
+      <section id="profile-form" class="card">
+        <div class="row">
+          <h2 class="grow">About the business</h2>
+          <span id="profile-saved" class="muted small" aria-live="polite"></span>
+        </div>
+        <div class="grid">
+          <div><label for="p-businessName">Business name</label><input id="p-businessName" data-field="businessName" /></div>
+          <div><label for="p-businessType">Type</label><input id="p-businessType" data-field="businessType" placeholder="Bar, Restaurant, Hotel…" /></div>
+        </div>
+        <label for="p-signature">Signature <small>added at the end of every reply, optional</small></label>
+        <input id="p-signature" data-field="signature" placeholder="— The team at …" />
+        <label for="p-tone">Tone of voice</label>
+        <textarea id="p-tone" data-field="tone" rows="2"></textarea>
+        <label for="p-facts">Facts the AI may use <small>hours, complaint email, booking link</small></label>
+        <textarea id="p-facts" data-field="facts" rows="5"></textarea>
+        <p class="small"><a href="#" data-open-settings>Edit rules and the situations playbook in full Settings →</a></p>
+      </section>
+    </section>
+  </main>
 
   <script src="sidepanel.js"></script>
 </body>

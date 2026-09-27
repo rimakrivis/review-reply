@@ -9,7 +9,7 @@
   "background": { "service_worker": "background.js" },
   "side_panel": { "default_path": "sidepanel.html" },
   "options_page": "options.html",
-  "permissions": ["storage", "contextMenus", "sidePanel"],
+  "permissions": ["storage", "sidePanel"],
   "host_permissions": ["https://api.openai.com/*"],
   "content_scripts": [
     {

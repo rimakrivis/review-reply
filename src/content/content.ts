@@ -1,5 +1,6 @@
 import type { DraftResponse, DraftResult, Message, Variant } from "../types";
 import { extractReview, findReviewContainer, UI_ATTR } from "./extract";
+import { initLauncher, refreshLauncher } from "./launcher";
 
 /**
  * Adds a "Draft reply" bar above every review reply box on the page.
@@ -99,7 +100,7 @@ function attach(editor: HTMLElement, container: Element): void {
   const run = async (variant: Variant) => {
     const review = extractReview(container);
     if (!review.text && !review.rating) {
-      show("error", "Couldn't read this review. Select its text, right-click and choose \"Draft a reply\".");
+      show("error", "Couldn't read this review. Reload the page and try again.");
       return;
     }
     buttons.forEach((b) => (b.disabled = true));
@@ -157,10 +158,14 @@ export function start(): void {
   let timer: number | undefined;
   const schedule = () => {
     clearTimeout(timer);
-    timer = window.setTimeout(() => scan(), 300);
+    timer = window.setTimeout(() => {
+      scan();
+      refreshLauncher();
+    }, 300);
   };
   new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
   scan();
+  initLauncher();
 }
 
 // Content scripts run as classic scripts; start automatically unless a page opts out (tests).

@@ -31,6 +31,8 @@ export interface Settings {
   model: string;
   activeProfileId: string;
   profiles: Profile[];
+  /** Show the floating ✨ button on Google review pages. */
+  showLauncher: boolean;
 }
 
 export interface Review {
@@ -58,7 +60,9 @@ export interface DraftResult {
 /** Messages exchanged between extension pages / content scripts and the background worker. */
 export type Message =
   | { type: "draft"; request: DraftRequest; profileId?: string }
-  | { type: "openOptions" };
+  | { type: "openOptions" }
+  | { type: "openPanel" }
+  | { type: "openFull" };
 
 export type DraftResponse =
   | { ok: true; result: DraftResult; profileName: string }

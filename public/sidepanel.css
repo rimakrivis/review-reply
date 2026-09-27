@@ -1,4 +1,23 @@
-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-body > label { margin: 0 0 -8px; }
+main { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 .card h2 { margin-bottom: 0; }
 .small { font-size: 12px; margin: 8px 0 0; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+
+header a { text-decoration: none; font-size: 13px; }
+header button { padding: 4px 10px; font-size: 13px; }
+
+.business label { margin: 0; }
+
+.tip { display: flex; align-items: flex-start; gap: 8px; background: var(--accent-soft); color: var(--accent-text); }
+.tip .grow { flex: 1; }
+button.icon { border: none; background: none; padding: 0 4px; color: inherit; line-height: 1.4; }
+
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+@media (max-width: 360px) { .grid { grid-template-columns: 1fr; } }
+
+/* Full view: the same UI opened in a normal browser tab. */
+body.full main { max-width: 1000px; margin: 0 auto; padding: 24px 16px 48px; }
+body.full #open-full, body.full #left-tip { display: none !important; }
+body.full .business { max-width: 420px; }
+body.full #panel-profile { max-width: 720px; }

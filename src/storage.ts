@@ -13,7 +13,7 @@ export const MODEL_OPTIONS: { id: string; note: string }[] = [
 ];
 
 export function defaultSettings(): Settings {
-  return { apiKey: "", model: DEFAULT_MODEL, activeProfileId: "", profiles: [] };
+  return { apiKey: "", model: DEFAULT_MODEL, activeProfileId: "", profiles: [], showLauncher: true };
 }
 
 export async function loadSettings(): Promise<Settings> {
@@ -39,5 +39,13 @@ export function onSettingsChanged(cb: (s: Settings) => void): void {
   });
 }
 
-/** chrome.storage.session key for review text sent from the right-click menu to the side panel. */
-export const PENDING_KEY = "pendingReview";
+/** chrome.storage.local key for where the owner dragged the ✨ button. */
+export const LAUNCHER_POS_KEY = "launcherPos";
+
+/** chrome.storage.local key set once the owner dismisses the "panel on the left" tip. */
+export const LEFT_TIP_KEY = "leftTipDismissed";
+
+/** Address of the side panel UI opened as a normal, wide browser tab. */
+export function fullViewUrl(): string {
+  return chrome.runtime.getURL("sidepanel.html?view=full");
+}

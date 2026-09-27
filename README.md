@@ -13,14 +13,13 @@ A human always stays in control. The extension only types a draft into the reply
 - **One-click drafts on the review page.** A "✨ Draft reply" bar appears above every reply box. It also offers **Shorter**, **Warmer** and **Try again**.
 - **Situations playbook.** For each recurring situation, you describe how to recognise it, how to respond and what never to say. You can add an example reply too. The AI picks the matching situation and shows you which one it used.
 - **Business profiles and templates.** Keep one profile per business and switch between them. Start from a Bar, Restaurant, Café, Hotel, Beauty salon or generic template. Export and import profiles as JSON.
-- **Side panel that works anywhere.** Select any review text, right-click, and choose *Draft a reply to this review*. You can also paste a review in. This works even if Google changes its page layout.
+- **Side panel for the business.** Click the toolbar icon to switch business and make quick edits to its name, tone and facts. **⤢ Full view** opens the same screen in a normal, wide browser tab.
+- **Floating ✨ button.** On Google review pages, a small button floats in the corner. It opens the side panel or the full view. Drag it to move it, or hide it from its menu or in Settings.
 - **Safe by default.** Built-in rules stop the AI from admitting liability, promising refunds or repeating personal details. The prompt tells the model to treat review text as data, never as instructions. The sample reviews include an "ignore previous instructions" attempt so you can check this.
 - **Cheap.** Works with any OpenAI chat model. With `gpt-4o-mini`, a reply costs a small fraction of a cent.
 - **Private.** Your API key stays in your browser. Reviews are sent only to OpenAI. There is no server.
 
-| Settings and playbook | Side panel |
-|---|---|
-| ![Settings page](docs/settings.png) | ![Side panel](docs/sidepanel.png) |
+![Settings page](docs/settings.png)
 
 ## How it works
 
@@ -28,7 +27,7 @@ A human always stays in control. The extension only types a draft into the reply
 flowchart LR
     subgraph UI["Where the user clicks"]
         C["🌐 Google review page<br/>content/content.ts + extract.ts<br/>✨ button, reads the review"]
-        SP["📋 Side panel<br/>sidepanel/sidepanel.ts<br/>paste or right-click"]
+        SP["📋 Side panel<br/>sidepanel/sidepanel.ts<br/>quick profile edits"]
         OP["⚙️ Settings page<br/>options/options.ts<br/>API key + playbook"]
     end
 
@@ -46,7 +45,7 @@ flowchart LR
     O["🤖 OpenAI API"]
 
     C <-->|"request ⇄ draft"| B
-    SP <-->|"request ⇄ draft"| B
+    SP -->|save| DB
     OP -->|save| DB
     ST -->|read| DB
     AI <-->|"prompt ⇄ JSON reply"| O
@@ -70,14 +69,15 @@ flowchart LR
 |---|---|
 | [src/content/content.ts](src/content/content.ts) | Runs inside Google's page. Adds the ✨ bar above each reply box and types the draft in. |
 | [src/content/extract.ts](src/content/extract.ts) | Reads the reviewer name, stars and text from Google's page using stable clues. |
-| [src/sidepanel/sidepanel.ts](src/sidepanel/sidepanel.ts) | Side panel for pasted or right-clicked reviews. Works even if Google's layout changes. |
+| [src/sidepanel/sidepanel.ts](src/sidepanel/sidepanel.ts) | Side panel for switching business and quick profile edits. The same page opens as a wide "full view" tab with `?view=full`. |
+| [src/content/launcher.ts](src/content/launcher.ts) | The floating ✨ button on Google review pages that opens the side panel or the full view. |
 | [src/options/options.ts](src/options/options.ts) | Settings page for the API key, model, business profiles and situations playbook. |
 
 **Background logic**
 
 | File | What it does |
 |---|---|
-| [src/background.ts](src/background.ts) | Receives every draft request and connects storage, prompt and AI. Also adds the right-click menu. |
+| [src/background.ts](src/background.ts) | Receives every draft request and connects storage, prompt and AI. Also opens the side panel and full view for the ✨ button. |
 | [src/storage.ts](src/storage.ts) | Saves and loads settings in `chrome.storage` and picks the active business. |
 | [src/prompt.ts](src/prompt.ts) | Turns a profile and a review into AI instructions, then checks the answer. |
 | [src/ai/openai.ts](src/ai/openai.ts) | Calls the OpenAI API and turns errors into plain-English messages. |
@@ -89,6 +89,7 @@ flowchart LR
 |---|---|
 | [src/types.ts](src/types.ts) | Data shapes used everywhere: `Review`, `Profile`, `Situation`, `Settings`, messages. |
 | [src/profiles.ts](src/profiles.ts) | Creates, copies, imports and exports business profiles as JSON. |
+| [src/profile-form.ts](src/profile-form.ts) | Connects profile input fields to a profile. Used by both Settings and the side panel. |
 | [src/templates/index.ts](src/templates/index.ts) | Starter playbooks for a bar, restaurant, café, hotel, beauty salon and a generic business. |
 
 **Packaging, tests and tools**
@@ -122,6 +123,10 @@ npm run build
 4. Click **+ New profile** with a template, and fill in the business name, facts and signature.
 5. Try it on the built-in demo page, linked at the bottom of settings. Then open your Google Business reviews and click **Reply** on a review.
 
+**Tips:**
+- To keep the ✨ icon in Chrome's toolbar, click the puzzle piece 🧩 and then the pin 📌 next to ReviewReply.
+- To open the side panel on the left, go to Chrome **Settings → Appearance → Side panel** and choose **Show on left**. An extension cannot choose the side itself.
+
 After code changes, run `npm run build` and click the reload icon on the extension card. `npm run watch` rebuilds on every save.
 
 ## Choosing a model
@@ -154,7 +159,7 @@ npm run check     # both, plus a production build
 
 ```
 src/
-  background.ts        service worker: drafting, right-click menu, side panel
+  background.ts        service worker: drafting, opening the side panel / full view
   prompt.ts            system/user prompt builder and JSON parsing
   ai/                  AIProvider interface and OpenAI implementation
   content/extract.ts   reads reviews from Google's page (pure DOM, unit tested)
@@ -169,7 +174,7 @@ test/                  unit tests and sample reviews
 
 ## Limitations
 
-- Google's review pages change without notice. If the draft bar stops appearing, use the side panel. The review-reading logic is in [src/content/extract.ts](src/content/extract.ts).
+- Google's review pages change without notice. If the draft bar stops appearing, the code that reads reviews needs updating. It is in [src/content/extract.ts](src/content/extract.ts).
 - The content script runs on `google.com`, `google.lt`, `google.co.uk`, `google.ie`, `google.de` and `business.google.com`. Add other country domains in [public/manifest.json](public/manifest.json).
 - Replies are generated in English. Change the first rule in a profile to use another language.
 

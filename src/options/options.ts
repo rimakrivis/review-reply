@@ -1,5 +1,6 @@
+import { bindProfileFields, fillProfileFields } from "../profile-form";
 import { emptySituation, newId, parseProfileJson, profileFromTemplate, profileToJson } from "../profiles";
-import { activeProfile, loadSettings, MODEL_OPTIONS, saveSettings } from "../storage";
+import { activeProfile, loadSettings, MODEL_OPTIONS, onSettingsChanged, saveSettings } from "../storage";
 import { TEMPLATES } from "../templates";
 import type { DraftResponse, Profile, Settings, Situation } from "../types";
 
@@ -120,23 +121,19 @@ function renderProfiles() {
 }
 
 function renderEditor(p: Profile) {
-  document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-field]").forEach((el) => {
-    el.value = p[el.dataset.field as keyof Omit<Profile, "id" | "situations">];
-  });
+  fillProfileFields(document, p);
   renderSituations(p);
 }
 
-document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-field]").forEach((el) => {
-  el.addEventListener("input", () => {
-    const p = current();
-    if (!p) return;
-    p[el.dataset.field as keyof Omit<Profile, "id" | "situations">] = el.value;
-    if (el.dataset.field === "businessName") {
-      const opt = profileSel.selectedOptions[0];
-      if (opt) opt.text = el.value || "(unnamed business)";
-    }
-    save();
-  });
+bindProfileFields(document, (field, value) => {
+  const p = current();
+  if (!p) return;
+  p[field] = value;
+  if (field === "businessName") {
+    const opt = profileSel.selectedOptions[0];
+    if (opt) opt.text = value || "(unnamed business)";
+  }
+  save();
 });
 
 function renderSituations(p: Profile, openId?: string) {
@@ -247,11 +244,24 @@ $<HTMLInputElement>("#import-file").addEventListener("change", async (e) => {
   }
 });
 
+/* ---------- Google pages ---------- */
+
+const launcherBox = $<HTMLInputElement>("#show-launcher");
+launcherBox.addEventListener("change", () => {
+  settings.showLauncher = launcherBox.checked;
+  save();
+});
+// The ✨ button's "Hide" item changes this setting from the Google page.
+onSettingsChanged((s) => {
+  if (settings) settings.showLauncher = launcherBox.checked = s.showLauncher;
+});
+
 /* ---------- Start ---------- */
 
 loadSettings().then((s) => {
   settings = s;
   keyInput.value = s.apiKey;
+  launcherBox.checked = s.showLauncher;
   renderModel();
   renderProfiles();
   if (!s.apiKey) keyInput.focus();
