@@ -1,6 +1,6 @@
 {
   "name": "review-reply",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Chrome extension that drafts on-brand replies to Google Business reviews with AI, using a per-business playbook of situations.",
   "private": true,
   "type": "module",
