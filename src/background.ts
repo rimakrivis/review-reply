@@ -1,8 +1,9 @@
 import { OpenAIProvider } from "./ai/openai";
 import { ProviderError } from "./ai/provider";
+import { addToArchive } from "./archive";
 import { buildPrompt } from "./prompt";
 import { activeProfile, fullViewUrl, loadSettings } from "./storage";
-import type { DraftRequest, DraftResponse, Message } from "./types";
+import type { DraftRequest, DraftResponse, Message, Review } from "./types";
 
 chrome.runtime.onInstalled.addListener((details) => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
@@ -28,7 +29,29 @@ async function draft(request: DraftRequest, profileId?: string): Promise<DraftRe
   }
 }
 
+/**
+ * Runs storage jobs one after another. Google's page and its pop-up frame can send reviews at the same moment;
+ * without the queue, two saves could read the same old list and one would overwrite the other.
+ */
+let queue: Promise<unknown> = Promise.resolve();
+function enqueue<T>(job: () => Promise<T>): Promise<T> {
+  const run = queue.then(job, job);
+  queue = run.catch(() => {});
+  return run;
+}
+
+/** Saves reviews seen on a Google page under the business selected in the side panel. */
+async function archive(reviews: Review[], sortedByNewest?: boolean): Promise<number> {
+  const profile = activeProfile(await loadSettings());
+  if (!profile || !reviews.length) return 0;
+  return addToArchive(profile.id, reviews, sortedByNewest);
+}
+
 chrome.runtime.onMessage.addListener((msg: Message, sender, sendResponse) => {
+  if (msg.type === "archiveReviews") {
+    enqueue(() => archive(msg.reviews, msg.sortedByNewest)).catch((e) => console.warn("[ReviewReply] Could not save reviews", e));
+    return false;
+  }
   if (msg.type === "draft") {
     draft(msg.request, msg.profileId).then(sendResponse);
     return true; // keep the channel open for the async answer

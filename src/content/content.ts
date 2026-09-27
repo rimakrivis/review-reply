@@ -1,5 +1,6 @@
 import type { DraftResponse, DraftResult, Message, Variant } from "../types";
-import { extractReview, findReviewContainer, UI_ATTR } from "./extract";
+import { extractAllReviews, extractReview, findReviewContainer, isSortedByNewest, UI_ATTR } from "./extract";
+import { extensionAlive } from "./alive";
 import { initLauncher, refreshLauncher } from "./launcher";
 
 /**
@@ -154,18 +155,64 @@ export function scan(root: ParentNode = document): number {
   return added;
 }
 
+let lastSent = "";
+
+/**
+ * Sends every review on Google's full review list to the background worker, which saves it in the business's
+ * review history. Only sends when the reviews on the page changed (Google loads more as the owner scrolls).
+ * Pages without Google's sort button (e.g. the short review previews on the search page) are not collected.
+ */
+export function collect(root: ParentNode = document): void {
+  // The demo page is an extension page: never mix its sample reviews into a real business's history.
+  if (location.protocol === "chrome-extension:" || !extensionAlive()) return;
+  const reviews = extractAllReviews(root);
+  if (!reviews.length) return;
+  const sortedByNewest = isSortedByNewest(root);
+  const signature = `${sortedByNewest}\n` + reviews.map((r) => `${r.reviewerName}|${r.rating}|${r.hasOwnerReply}`).join("\n");
+  if (signature === lastSent) return;
+  lastSent = signature;
+  const where = `${location.host}${location.pathname}`;
+  if (sortedByNewest === undefined) {
+    console.info(`[ReviewReply] Not saving ${reviews.length} reviews: no Google sort button here (${where})`);
+    return;
+  }
+  console.info(`[ReviewReply] Saving ${reviews.length} reviews · sorted by Newest: ${sortedByNewest} · ${where}`);
+  const msg: Message = { type: "archiveReviews", reviews, sortedByNewest };
+  chrome.runtime.sendMessage(msg).catch(() => {});
+}
+
+/** When the owner clears a review history, send this page's reviews again instead of assuming they are saved. */
+function resendAfterClear(): void {
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (!extensionAlive()) return;
+    const cleared = Object.keys(changes).some((k) => k.startsWith("reviews:") && changes[k].newValue === undefined);
+    if (area === "local" && cleared) {
+      lastSent = "";
+      collect();
+    }
+  });
+}
+
 export function start(): void {
   let timer: number | undefined;
-  const schedule = () => {
+  const observer = new MutationObserver(() => {
     clearTimeout(timer);
+    // After the extension is reloaded, this old copy stops watching the page instead of throwing errors.
+    if (!extensionAlive()) {
+      observer.disconnect();
+      return;
+    }
     timer = window.setTimeout(() => {
       scan();
       refreshLauncher();
+      collect();
     }, 300);
-  };
-  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
   scan();
   initLauncher();
+  collect();
+  resendAfterClear();
 }
 
 // Content scripts run as classic scripts; start automatically unless a page opts out (tests).

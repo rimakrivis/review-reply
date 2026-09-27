@@ -27,6 +27,19 @@
       <select id="profile" class="grow"></select>
     </div>
 
+    <section id="history" class="card" hidden>
+      <h2>Review history</h2>
+      <p class="small">Collecting for: <b id="history-business"></b></p>
+      <p id="history-count" class="small"></p>
+      <p id="history-updated" class="muted small"></p>
+      <p id="history-complete" class="small"></p>
+      <div id="history-sort-warning" class="notice warn small" hidden>
+        Google's review list is not sorted by <b>Newest</b>. Switch the sort to <b>Newest</b> so ReviewReply can tell which months are complete.
+      </div>
+      <p class="muted small">Tip: open your Google reviews, sort by <b>Newest</b>, and scroll down to collect older months. Reports can only be made for complete months.</p>
+      <p class="small"><button id="clear-history" type="button" class="danger" hidden>Clear review history</button></p>
+    </section>
+
     <section id="panel-profile" class="stack">
       <div id="profile-empty" class="notice warn" hidden>
         No business profile yet. <a href="#" data-open-settings>Create one in Settings</a>.

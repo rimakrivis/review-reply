@@ -1,5 +1,6 @@
 import { LAUNCHER_POS_KEY, loadSettings, onSettingsChanged, saveSettings } from "../storage";
 import type { Message } from "../types";
+import { extensionAlive } from "./alive";
 import { findReviewContainer, UI_ATTR } from "./extract";
 
 /**
@@ -86,11 +87,7 @@ export function clampPos(p: Pos, width: number, height: number): Pos {
 }
 
 function send(msg: Message): void {
-  try {
-    chrome.runtime.sendMessage(msg).catch(() => {});
-  } catch {
-    // The extension was reloaded; this old content script can no longer reach it.
-  }
+  if (extensionAlive()) chrome.runtime.sendMessage(msg).catch(() => {});
 }
 
 function mount(doc: Document): void {
@@ -121,7 +118,7 @@ function mount(doc: Document): void {
     el.style.bottom = `${pos.bottom}px`;
   };
 
-  chrome.storage.local.get(LAUNCHER_POS_KEY).then((got) => {
+  if (extensionAlive()) chrome.storage.local.get(LAUNCHER_POS_KEY).then((got) => {
     const saved = got[LAUNCHER_POS_KEY] as Pos | undefined;
     if (saved && typeof saved.right === "number" && typeof saved.bottom === "number") place(saved);
   });
@@ -155,7 +152,7 @@ function mount(doc: Document): void {
     place({ right: start.pos.right - dx, bottom: start.pos.bottom - dy });
   });
   const endDrag = () => {
-    if (dragged) chrome.storage.local.set({ [LAUNCHER_POS_KEY]: pos });
+    if (dragged && extensionAlive()) chrome.storage.local.set({ [LAUNCHER_POS_KEY]: pos });
     start = null;
     fab.classList.remove("dragging");
   };
@@ -204,6 +201,7 @@ function unmount(): void {
 
 /** Shows the button once the page has reviews to reply to. Cheap to call after every page change. */
 export function refreshLauncher(doc: Document = document): void {
+  if (!extensionAlive()) return;
   if (!isTopFrame()) {
     // Google often shows reviews in a pop-up frame. The button belongs to the main page, so tell it once.
     if (!reportedToTop && hasOwnerReviews(doc)) {

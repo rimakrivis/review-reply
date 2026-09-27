@@ -20,7 +20,7 @@ beforeEach(() => {
   listeners = [];
   sendMessage.mockClear();
   vi.stubGlobal("chrome", {
-    runtime: { sendMessage },
+    runtime: { id: "test", sendMessage },
     storage: {
       local: {
         get: async (key: string) => ({ [key]: stored[key] }),

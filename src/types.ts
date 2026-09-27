@@ -40,6 +40,34 @@ export interface Review {
   /** 1-5, or 0 when unknown. */
   rating: number;
   text: string;
+  /** When the review was written (ms since 1970), if the page shows it. */
+  date?: number;
+  /** True for vague dates like "2 months ago", which may be off by weeks. */
+  dateIsRough?: boolean;
+  /** True when the owner has already replied on Google. */
+  hasOwnerReply?: boolean;
+  /** Google's own id for the review (data-review-id), when the page shows it. Never changes. */
+  googleId?: string;
+  /** Extra answers under the review, e.g. { Food: "4/5", Service: "1/5", "Price per person": "€10–20" }. */
+  details?: Record<string, string>;
+}
+
+/** A review saved in the extension's archive. */
+export interface StoredReview extends Review {
+  /** Stable id made from the review's content, used to skip duplicates. */
+  id: string;
+  date: number;
+  /** When the extension first saw this review. */
+  firstSeen: number;
+}
+
+/** Star statistics for a set of reviews. */
+export interface Stats {
+  count: number;
+  /** Average stars (0 when there are no rated reviews). */
+  average: number;
+  /** How many reviews gave 1, 2, 3, 4 and 5 stars: stars[0] is 1★ … stars[4] is 5★. */
+  stars: [number, number, number, number, number];
 }
 
 export type Variant = "default" | "shorter" | "warmer" | "regenerate";
@@ -62,7 +90,13 @@ export type Message =
   | { type: "draft"; request: DraftRequest; profileId?: string }
   | { type: "openOptions" }
   | { type: "openPanel" }
-  | { type: "openFull" };
+  | { type: "openFull" }
+  | {
+      type: "archiveReviews";
+      reviews: Review[];
+      /** true / false when the page has Google's sort button; undefined on pages without one. */
+      sortedByNewest?: boolean;
+    };
 
 export type DraftResponse =
   | { ok: true; result: DraftResult; profileName: string }
