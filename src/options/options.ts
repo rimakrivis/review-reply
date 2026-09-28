@@ -1,8 +1,8 @@
 import { bindProfileFields, fillProfileFields } from "../profile-form";
-import { emptySituation, newId, parseProfileJson, profileFromTemplate, profileToJson } from "../profiles";
+import { emptySituation, emptyUrgentTopic, newId, parseProfileJson, profileFromTemplate, profileToJson } from "../profiles";
 import { activeProfile, loadSettings, MODEL_OPTIONS, onSettingsChanged, saveSettings } from "../storage";
 import { TEMPLATES } from "../templates";
-import type { DraftResponse, Profile, Settings, Situation } from "../types";
+import type { DraftResponse, Profile, Settings, Situation, UrgentTopic } from "../types";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 
@@ -14,6 +14,7 @@ const templateSel = $<HTMLSelectElement>("#template");
 const savedLabel = $("#saved");
 const profileMsg = $("#profile-msg");
 const situationsBox = $("#situations");
+const urgentBox = $("#urgent-topics");
 const CUSTOM = "__custom__";
 
 let settings: Settings;
@@ -117,12 +118,14 @@ function renderProfiles() {
   for (const id of ["#duplicate", "#export", "#delete"]) $<HTMLButtonElement>(id).disabled = none;
   $("#editor").hidden = none;
   $("#situations-card").hidden = none;
+  $("#urgent-card").hidden = none;
   if (p) renderEditor(p);
 }
 
 function renderEditor(p: Profile) {
   fillProfileFields(document, p);
   renderSituations(p);
+  renderUrgentTopics(p);
 }
 
 bindProfileFields(document, (field, value) => {
@@ -174,6 +177,44 @@ $("#add-situation").addEventListener("click", () => {
   save();
 });
 
+function renderUrgentTopics(p: Profile, openId?: string) {
+  const tpl = $<HTMLTemplateElement>("#urgent-tpl");
+  urgentBox.replaceChildren(
+    ...p.urgentTopics.map((t) => {
+      const node = tpl.content.firstElementChild!.cloneNode(true) as HTMLDetailsElement;
+      const title = node.querySelector(".s-title")!;
+      title.textContent = t.name || "(unnamed)";
+      node.open = t.id === openId;
+      node.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-u]").forEach((el) => {
+        const field = el.dataset.u as keyof Omit<UrgentTopic, "id">;
+        el.value = t[field];
+        el.addEventListener("input", () => {
+          t[field] = el.value;
+          if (field === "name") title.textContent = el.value || "(unnamed)";
+          save();
+        });
+      });
+      node.querySelector("[data-remove]")!.addEventListener("click", () => {
+        if (!confirm(`Remove the urgent topic "${t.name}"?`)) return;
+        p.urgentTopics = p.urgentTopics.filter((x) => x !== t);
+        renderUrgentTopics(p);
+        save();
+      });
+      return node;
+    }),
+  );
+}
+
+$("#add-urgent").addEventListener("click", () => {
+  const p = current();
+  if (!p) return;
+  const t = emptyUrgentTopic();
+  p.urgentTopics.unshift(t);
+  renderUrgentTopics(p, t.id);
+  urgentBox.querySelector<HTMLInputElement>("[data-u=name]")?.select();
+  save();
+});
+
 profileSel.addEventListener("change", () => {
   settings.activeProfileId = profileSel.value;
   renderProfiles();
@@ -200,6 +241,7 @@ $("#duplicate").addEventListener("click", () => {
     businessName: `${p.businessName} (copy)`,
   };
   copy.situations = copy.situations.map((s) => ({ ...s, id: newId() }));
+  copy.urgentTopics = copy.urgentTopics.map((t) => ({ ...t, id: newId() }));
   settings.profiles.push(copy);
   settings.activeProfileId = copy.id;
   renderProfiles();
@@ -238,7 +280,7 @@ $<HTMLInputElement>("#import-file").addEventListener("change", async (e) => {
     settings.activeProfileId = p.id;
     renderProfiles();
     save();
-    notify("ok", `Imported "${p.businessName}" with ${p.situations.length} situations.`);
+    notify("ok", `Imported "${p.businessName}" with ${p.situations.length} situations and ${p.urgentTopics.length} urgent topics.`);
   } catch (err) {
     notify("error", `Could not import: ${err instanceof Error ? err.message : err}`);
   }

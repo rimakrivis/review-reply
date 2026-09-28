@@ -1,3 +1,4 @@
+import { normalizeProfile } from "./profiles";
 import type { Profile, Settings } from "./types";
 
 const KEY = "settings";
@@ -16,9 +17,15 @@ export function defaultSettings(): Settings {
   return { apiKey: "", model: DEFAULT_MODEL, activeProfileId: "", profiles: [], showLauncher: true };
 }
 
+/** Settings as saved, with defaults for anything an older version didn't save. */
+function withDefaults(saved: Partial<Settings> | undefined): Settings {
+  const s = { ...defaultSettings(), ...saved };
+  return { ...s, profiles: s.profiles.map(normalizeProfile) };
+}
+
 export async function loadSettings(): Promise<Settings> {
   const got = await chrome.storage.local.get(KEY);
-  return { ...defaultSettings(), ...(got[KEY] as Partial<Settings> | undefined) };
+  return withDefaults(got[KEY] as Partial<Settings> | undefined);
 }
 
 export async function saveSettings(s: Settings): Promise<void> {
@@ -34,7 +41,7 @@ export function activeProfile(s: Settings, id?: string): Profile | undefined {
 export function onSettingsChanged(cb: (s: Settings) => void): void {
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "local" && changes[KEY]) {
-      cb({ ...defaultSettings(), ...(changes[KEY].newValue as Partial<Settings>) });
+      cb(withDefaults(changes[KEY].newValue as Partial<Settings> | undefined));
     }
   });
 }

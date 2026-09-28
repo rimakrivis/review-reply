@@ -12,6 +12,14 @@ export interface Situation {
   example: string;
 }
 
+/** Something so serious the owner must hear about it right away, e.g. "Drink spiking". */
+export interface UrgentTopic {
+  id: string;
+  name: string;
+  /** How to recognise this topic in a review. */
+  description: string;
+}
+
 /** Everything the AI needs to know about one business. */
 export interface Profile {
   id: string;
@@ -24,6 +32,10 @@ export interface Profile {
   /** Rules that apply to every reply. */
   rules: string;
   situations: Situation[];
+  /** Topics that count as urgent in reports and the 🚨 badge. */
+  urgentTopics: UrgentTopic[];
+  /** Language reports are written in, e.g. "English" or "Lithuanian". */
+  reportLanguage: string;
 }
 
 export interface Settings {

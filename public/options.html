@@ -65,6 +65,20 @@
       <textarea id="f-facts" data-field="facts" rows="4" placeholder="Complaints: hello@example.com&#10;Open Wed–Sun from 18:00&#10;Happy hour 18:00–20:00"></textarea>
       <label for="f-rules">Rules for every reply <small>one per line</small></label>
       <textarea id="f-rules" data-field="rules" rows="8"></textarea>
+      <label for="f-reportLanguage">Report language <small>monthly and yearly reports are written in this language</small></label>
+      <input id="f-reportLanguage" data-field="reportLanguage" list="languages" placeholder="English" />
+      <datalist id="languages">
+        <option value="English"></option>
+        <option value="Lithuanian"></option>
+        <option value="Dutch"></option>
+        <option value="German"></option>
+        <option value="French"></option>
+        <option value="Spanish"></option>
+        <option value="Italian"></option>
+        <option value="Polish"></option>
+        <option value="Russian"></option>
+        <option value="Ukrainian"></option>
+      </datalist>
     </section>
 
     <section id="situations-card" class="card" hidden>
@@ -76,8 +90,17 @@
       <div id="situations"></div>
     </section>
 
+    <section id="urgent-card" class="card" hidden>
+      <div class="row">
+        <h2 class="grow">5. Urgent topics</h2>
+        <button id="add-urgent" type="button">+ Add topic</button>
+      </div>
+      <p class="muted small">Reviews about these topics are shown first in reports and marked with 🚨, so you can act on them right away.</p>
+      <div id="urgent-topics"></div>
+    </section>
+
     <section class="card">
-      <h2>5. On Google pages</h2>
+      <h2>6. On Google pages</h2>
       <label class="check"><input id="show-launcher" type="checkbox" /> Show the ✨ button on Google review pages</label>
       <p class="muted small">It floats in a corner and opens the side panel or the full view. Drag it to move it.</p>
     </section>
@@ -94,6 +117,15 @@
       <label>Never say <small>optional</small></label><textarea data-s="avoid" rows="2"></textarea>
       <label>Example reply <small>optional, in your voice</small></label><textarea data-s="example" rows="3"></textarea>
       <div class="row" style="margin-top:10px"><button type="button" class="danger" data-remove>Remove situation</button></div>
+    </details>
+  </template>
+
+  <template id="urgent-tpl">
+    <details class="situation">
+      <summary><span class="s-title"></span></summary>
+      <label>Name</label><input data-u="name" />
+      <label>How to recognise it</label><textarea data-u="description" rows="2"></textarea>
+      <div class="row" style="margin-top:10px"><button type="button" class="danger" data-remove>Remove topic</button></div>
     </details>
   </template>
 

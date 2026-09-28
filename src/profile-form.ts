@@ -5,8 +5,8 @@ import type { Profile } from "./types";
  * Shared by the Settings page and the side panel.
  */
 
-/** Profile fields edited as plain text (everything except the id and the situations list). */
-export type ProfileTextField = Exclude<keyof Profile, "id" | "situations">;
+/** Profile fields edited as plain text (everything except the id and the two lists). */
+export type ProfileTextField = Exclude<keyof Profile, "id" | "situations" | "urgentTopics">;
 
 function fields(root: ParentNode): (HTMLInputElement | HTMLTextAreaElement)[] {
   return Array.from(root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-field]"));

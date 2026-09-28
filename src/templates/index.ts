@@ -1,4 +1,4 @@
-import type { Profile, Situation } from "../types";
+import type { Profile, Situation, UrgentTopic } from "../types";
 
 /** A starter profile for one kind of business. Real details get filled in on the settings page. */
 export interface Template {
@@ -233,7 +233,49 @@ const SALON: Situation[] = [
   ),
 ];
 
-function template(key: string, label: string, businessType: string, specific: Situation[]): Template {
+function u(id: string, name: string, description: string): UrgentTopic {
+  return { id, name, description };
+}
+
+/** Urgent topics that apply to almost every business. */
+const COMMON_URGENT: UrgentTopic[] = [
+  u("hygiene", "Hygiene or pests", "Dirty toilets, kitchen or tables; mice, rats, cockroaches or other pests."),
+  u("illness", "Food poisoning or illness", "The guest says they got sick, vomited or had stomach problems after the visit."),
+  u("injury", "Injury or safety", "Someone was hurt, fell, or points out a danger such as broken glass, a fire risk or blocked exits."),
+  u("discrimination", "Discrimination", "The guest says they were treated worse because of race, religion, gender, sexuality, disability or age."),
+  u("legal", "Threats of legal action", "Mentions a lawyer, the police, suing, the health inspector or reporting the business."),
+];
+
+const BAR_URGENT: UrgentTopic[] = [
+  u("violence", "Fights or violence", "A fight, assault, or someone being hit, pushed or threatened."),
+  u("spiking", "Drink spiking", "The guest says they or a friend felt drugged, blacked out after few drinks, or saw something put in a drink."),
+  u("security", "Security staff behaviour", "Door staff or bouncers were aggressive, rough, insulting or used force."),
+  u("theft", "Theft", "Phone, wallet, bag or coat stolen inside the venue or from the cloakroom."),
+];
+
+const FOOD_URGENT: UrgentTopic[] = [
+  u("allergen", "Allergen incident", "The guest had an allergic reaction, or was served an allergen they had warned about."),
+  u("foreign-object", "Foreign object in food", "Hair, glass, plastic, metal, an insect or anything else that should not be in the food."),
+];
+
+const HOTEL_URGENT: UrgentTopic[] = [
+  u("bed-bugs", "Bed bugs", "Bites, bugs in the bed, or blood spots on the sheets."),
+  u("room-theft", "Theft from room", "Money, valuables or luggage missing from the room or the safe."),
+  u("security", "Security", "Strangers in the corridors, a door that does not lock, or someone entering the room without permission."),
+];
+
+const SALON_URGENT: UrgentTopic[] = [
+  u("skin-reaction", "Skin reaction or burn", "Burns, rashes, cuts, hair damage or an allergic reaction after a treatment."),
+  u("unhygienic-tools", "Unhygienic tools", "Tools or towels were not cleaned or changed between clients."),
+];
+
+function template(
+  key: string,
+  label: string,
+  businessType: string,
+  specific: Situation[],
+  urgent: UrgentTopic[],
+): Template {
   return {
     key,
     label,
@@ -245,15 +287,17 @@ function template(key: string, label: string, businessType: string, specific: Si
       facts: "",
       rules: DEFAULT_RULES,
       situations: [...specific, ...COMMON].map((x) => ({ ...x })),
+      urgentTopics: [...urgent, ...COMMON_URGENT].map((x) => ({ ...x })),
+      reportLanguage: "English",
     },
   };
 }
 
 export const TEMPLATES: Template[] = [
-  template("bar", "Bar / Nightclub", "Bar", BAR),
-  template("restaurant", "Restaurant", "Restaurant", RESTAURANT),
-  template("cafe", "Café", "Café", CAFE),
-  template("hotel", "Hotel", "Hotel", HOTEL),
-  template("salon", "Beauty salon", "Beauty salon", SALON),
-  template("generic", "Other business", "Business", []),
+  template("bar", "Bar / Nightclub", "Bar", BAR, BAR_URGENT),
+  template("restaurant", "Restaurant", "Restaurant", RESTAURANT, FOOD_URGENT),
+  template("cafe", "Café", "Café", CAFE, FOOD_URGENT),
+  template("hotel", "Hotel", "Hotel", HOTEL, HOTEL_URGENT),
+  template("salon", "Beauty salon", "Beauty salon", SALON, SALON_URGENT),
+  template("generic", "Other business", "Business", [], []),
 ];
