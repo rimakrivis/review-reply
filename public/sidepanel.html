@@ -27,20 +27,12 @@
       <select id="profile" class="grow"></select>
     </div>
 
-    <section id="history" class="card" hidden>
-      <h2>Review history</h2>
-      <p class="small">Collecting for: <b id="history-business"></b></p>
-      <p id="history-count" class="small"></p>
-      <p id="history-updated" class="muted small"></p>
-      <p id="history-complete" class="small"></p>
-      <div id="history-sort-warning" class="notice warn small" hidden>
-        Google's review list is not sorted by <b>Newest</b>. Switch the sort to <b>Newest</b> so ReviewReply can tell which months are complete.
-      </div>
-      <p class="muted small">Tip: open your Google reviews, sort by <b>Newest</b>, and scroll down to collect older months. Reports can only be made for complete months.</p>
-      <p class="small"><button id="clear-history" type="button" class="danger" hidden>Clear review history</button></p>
-    </section>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button type="button" role="tab" id="tab-profile" data-tab="profile" aria-controls="panel-profile">🏢 Profile</button>
+      <button type="button" role="tab" id="tab-reports" data-tab="reports" aria-controls="panel-reports">📊 Reports</button>
+    </nav>
 
-    <section id="panel-profile" class="stack">
+    <section id="panel-profile" class="stack" role="tabpanel" aria-labelledby="tab-profile">
       <div id="profile-empty" class="notice warn" hidden>
         No business profile yet. <a href="#" data-open-settings>Create one in Settings</a>.
       </div>
@@ -75,6 +67,39 @@
           <option value="Ukrainian"></option>
         </datalist>
         <p class="small"><a href="#" data-open-settings>Edit rules, the situations playbook and urgent topics in full Settings →</a></p>
+      </section>
+    </section>
+
+    <section id="panel-reports" class="stack" role="tabpanel" aria-labelledby="tab-reports" hidden>
+      <section id="reports-card" class="card">
+        <h2>Monthly reports</h2>
+        <p id="reports-empty" class="muted small" hidden></p>
+        <div id="reports-controls">
+          <div class="row" style="margin-top:10px">
+            <select id="report-month" class="grow" aria-label="Month"></select>
+            <button id="make-report" type="button" class="primary">Make report</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="make-missing" type="button">Make missing reports</button>
+            <button id="save-pdf" type="button" hidden>Save as PDF</button>
+          </div>
+        </div>
+        <div id="report-status" class="notice small" aria-live="polite" hidden></div>
+      </section>
+
+      <article id="report" class="card report" hidden></article>
+
+      <section id="history" class="card" hidden>
+        <h2>Review history</h2>
+        <p class="small">Collecting for: <b id="history-business"></b></p>
+        <p id="history-count" class="small"></p>
+        <p id="history-updated" class="muted small"></p>
+        <p id="history-complete" class="small"></p>
+        <div id="history-sort-warning" class="notice warn small" hidden>
+          Google's review list is not sorted by <b>Newest</b>. Switch the sort to <b>Newest</b> so ReviewReply can tell which months are complete.
+        </div>
+        <p class="muted small">Tip: open your Google reviews, sort by <b>Newest</b>, and scroll down to collect older months. Reports can only be made for complete months.</p>
+        <p class="small"><button id="clear-history" type="button" class="danger" hidden>Clear review history</button></p>
       </section>
     </section>
   </main>

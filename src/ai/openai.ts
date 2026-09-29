@@ -1,5 +1,6 @@
 import { DRAFT_SCHEMA, parseDraft, type Prompt } from "../prompt";
-import type { DraftResult } from "../types";
+import { MONTH_SCHEMA, parseMonthReport } from "../report-prompt";
+import type { DraftResult, MonthReport, StoredReview } from "../types";
 import { ProviderError, type AIProvider } from "./provider";
 
 const URL = "https://api.openai.com/v1/chat/completions";
@@ -9,7 +10,36 @@ export function isReasoningModel(model: string): boolean {
   return /^(gpt-5|o\d)/i.test(model);
 }
 
-export function buildRequestBody(model: string, prompt: Prompt): Record<string, unknown> {
+/** What kind of answer a request asks for. */
+export interface RequestSpec {
+  /** Schema name sent to OpenAI. */
+  name: string;
+  schema: unknown;
+  /** Answer length limit for classic models. */
+  maxTokens: number;
+  /** Limit for reasoning models, which also spend tokens on hidden thinking. */
+  reasoningMaxTokens: number;
+  /** Higher is more varied wording, lower is more factual. */
+  temperature: number;
+}
+
+export const DRAFT_SPEC: RequestSpec = {
+  name: "review_reply",
+  schema: DRAFT_SCHEMA,
+  maxTokens: 600,
+  reasoningMaxTokens: 4000,
+  temperature: 0.7,
+};
+
+export const MONTH_SPEC: RequestSpec = {
+  name: "month_report",
+  schema: MONTH_SCHEMA,
+  maxTokens: 4000,
+  reasoningMaxTokens: 10000,
+  temperature: 0.3,
+};
+
+export function buildRequestBody(model: string, prompt: Prompt, spec: RequestSpec = DRAFT_SPEC): Record<string, unknown> {
   const body: Record<string, unknown> = {
     model,
     messages: [
@@ -18,16 +48,16 @@ export function buildRequestBody(model: string, prompt: Prompt): Record<string, 
     ],
     response_format: {
       type: "json_schema",
-      json_schema: { name: "review_reply", strict: true, schema: DRAFT_SCHEMA },
+      json_schema: { name: spec.name, strict: true, schema: spec.schema },
     },
   };
   if (isReasoningModel(model)) {
-    // Replies are short; keep hidden reasoning cheap and fast. Budget includes reasoning tokens.
+    // Keep hidden reasoning cheap and fast. The budget includes reasoning tokens.
     body.reasoning_effort = /^gpt-5(-|$)/i.test(model) ? "minimal" : "low";
-    body.max_completion_tokens = 4000;
+    body.max_completion_tokens = spec.reasoningMaxTokens;
   } else {
-    body.temperature = 0.7;
-    body.max_completion_tokens = 600;
+    body.temperature = spec.temperature;
+    body.max_completion_tokens = spec.maxTokens;
   }
   return body;
 }
@@ -56,6 +86,16 @@ export class OpenAIProvider implements AIProvider {
   ) {}
 
   async draft(prompt: Prompt): Promise<DraftResult> {
+    return parseDraft(await this.complete(prompt, DRAFT_SPEC));
+  }
+
+  /** `listed` are the reviews in the prompt, in the same order, so review numbers can be turned into names. */
+  async summarizeMonth(prompt: Prompt, listed: StoredReview[]): Promise<MonthReport> {
+    return parseMonthReport(await this.complete(prompt, MONTH_SPEC), listed);
+  }
+
+  /** Sends one request and returns the model's raw JSON text, or throws a ProviderError worth showing. */
+  private async complete(prompt: Prompt, spec: RequestSpec): Promise<string> {
     if (!this.apiKey.trim()) {
       throw new ProviderError("Add your OpenAI API key in Settings first.", true);
     }
@@ -67,7 +107,7 @@ export class OpenAIProvider implements AIProvider {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.apiKey.trim()}`,
         },
-        body: JSON.stringify(buildRequestBody(this.model, prompt)),
+        body: JSON.stringify(buildRequestBody(this.model, prompt, spec)),
       });
     } catch (e) {
       console.warn("[ReviewReply] OpenAI request failed", e);
@@ -89,6 +129,6 @@ export class OpenAIProvider implements AIProvider {
           : "The AI returned no answer. Try again.",
       );
     }
-    return parseDraft(content);
+    return content;
   }
 }

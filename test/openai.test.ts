@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildRequestBody, isReasoningModel, OpenAIProvider } from "../src/ai/openai";
+import { buildRequestBody, isReasoningModel, MONTH_SPEC, OpenAIProvider } from "../src/ai/openai";
 
 const prompt = { system: "sys", user: "usr" };
 
@@ -48,5 +48,28 @@ describe("OpenAIProvider", () => {
   it("reports network failures", async () => {
     const f = vi.fn(async () => { throw new TypeError("Failed to fetch"); }) as unknown as typeof fetch;
     await expect(new OpenAIProvider("k", "m", f).draft(prompt)).rejects.toThrow(/internet/);
+  });
+});
+
+describe("summarizeMonth", () => {
+  it("asks for the report schema with a larger budget and turns review numbers into counts", async () => {
+    const answer = {
+      overview: "Good month.",
+      urgent: [],
+      themes: [{ theme: "Staff", feeling: "praise", reviews: [1, 2], details: "Friendly", quotes: [] }],
+      changes: [],
+      suggestions: [],
+    };
+    const f = fakeFetch(200, { choices: [{ message: { content: JSON.stringify(answer) } }] });
+    const listed = [1, 2].map((i) => ({ reviewerName: `R${i}`, rating: 5, text: "x", date: 0, id: String(i), firstSeen: 0 }));
+    const r = await new OpenAIProvider("k", "gpt-4o-mini", f).summarizeMonth(prompt, listed);
+    expect(r.praise[0].mentions).toBe(2);
+    const body = JSON.parse((f as any).mock.calls[0][1].body);
+    expect(body.response_format.json_schema.name).toBe("month_report");
+    expect(body.max_completion_tokens).toBe(MONTH_SPEC.maxTokens);
+    expect(body.temperature).toBe(MONTH_SPEC.temperature);
+  });
+  it("keeps replies on the reply schema by default", () => {
+    expect((buildRequestBody("gpt-4o-mini", prompt) as any).response_format.json_schema.name).toBe("review_reply");
   });
 });

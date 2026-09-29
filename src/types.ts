@@ -82,6 +82,48 @@ export interface Stats {
   stars: [number, number, number, number, number];
 }
 
+/** A theme guests praise or complain about in one month. */
+export interface ReportTheme {
+  theme: string;
+  /** How many of the month's reviews mention it (counted by code, not guessed by the AI). */
+  mentions: number;
+  details: string;
+  /** Short word-for-word quotes from reviews. */
+  quotes: string[];
+}
+
+/** A review about one of the business's urgent topics. */
+export interface UrgentItem {
+  topic: string;
+  what: string;
+  /** Who wrote it, e.g. "Anna · 12 Aug · 1★", so the owner can find it on Google. */
+  reviewers: string[];
+}
+
+/** The part of a monthly report written by the AI. */
+export interface MonthReport {
+  overview: string;
+  urgent: UrgentItem[];
+  praise: ReportTheme[];
+  complaints: ReportTheme[];
+  /** What changed since last month. */
+  changes: string[];
+  suggestions: string[];
+}
+
+/** Everything saved for one month of one business. */
+export interface MonthEntry {
+  /** "2026-08" */
+  month: string;
+  /** Exact numbers, calculated by code. */
+  stats: Stats;
+  /** null when the month had no reviews, so no AI report was needed. */
+  report: MonthReport | null;
+  createdAt: number;
+  /** True once the owner has looked at the report. */
+  opened: boolean;
+}
+
 export type Variant = "default" | "shorter" | "warmer" | "regenerate";
 
 export interface DraftRequest {
@@ -108,7 +150,13 @@ export type Message =
       reviews: Review[];
       /** true / false when the page has Google's sort button; undefined on pages without one. */
       sortedByNewest?: boolean;
-    };
+    }
+  | { type: "makeMonthReport"; profileId: string; month: string }
+  | { type: "makeMissingReports"; profileId: string }
+  | { type: "markReportOpened"; profileId: string; month: string };
+
+/** Answer to makeMonthReport / makeMissingReports. */
+export type ReportResponse = { ok: true; made: number } | { ok: false; error: string; needsSetup?: boolean };
 
 export type DraftResponse =
   | { ok: true; result: DraftResult; profileName: string }

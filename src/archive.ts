@@ -1,4 +1,4 @@
-import type { Review, Stats, StoredReview } from "./types";
+import type { MonthEntry, Review, Stats, StoredReview } from "./types";
 
 /**
  * The review archive: every review the extension has seen, saved per business in chrome.storage.local.
@@ -157,10 +157,35 @@ export function completeMonths(ranges: Range[], now: number): string[] {
   return months;
 }
 
+/* ---------- Monthly reports ---------- */
+
+/** The reviews dated inside one "2026-08" month. */
+export function reviewsInMonth(reviews: StoredReview[], month: string): StoredReview[] {
+  return reviews.filter((r) => monthKey(r.date) === month);
+}
+
+/** "2026-01" → "2025-12" */
+export function previousMonth(month: string): string {
+  const [y, m] = month.split("-").map(Number);
+  return monthKey(new Date(y, m - 2, 1).getTime());
+}
+
+/** Months the owner can pick in the Reports tab: complete months and months with a report, newest first. */
+export function reportMonths(ranges: Range[], months: Record<string, MonthEntry>, now: number): string[] {
+  const all = new Set([...completeMonths(ranges, now), ...Object.keys(months)]);
+  return [...all].sort().reverse();
+}
+
+/** Complete months that don't have a report yet, oldest first. */
+export function missingMonths(ranges: Range[], months: Record<string, MonthEntry>, now: number): string[] {
+  return completeMonths(ranges, now).filter((m) => !months[m]);
+}
+
 /* ---------- Storage ---------- */
 
 export const reviewsKey = (profileId: string) => `reviews:${profileId}`;
 export const collectKey = (profileId: string) => `collect:${profileId}`;
+export const monthsKey = (profileId: string) => `months:${profileId}`;
 
 /** When the owner last had a Google review page open for this business, and what it covered. */
 export interface CollectInfo {
@@ -181,6 +206,19 @@ export async function loadCollectInfo(profileId: string): Promise<CollectInfo | 
   const key = collectKey(profileId);
   const got = await chrome.storage.local.get(key);
   return got[key] as CollectInfo | undefined;
+}
+
+export async function loadMonths(profileId: string): Promise<Record<string, MonthEntry>> {
+  const key = monthsKey(profileId);
+  const got = await chrome.storage.local.get(key);
+  return (got[key] as Record<string, MonthEntry> | undefined) ?? {};
+}
+
+/** Saves one month's entry, keeping the other months. Call it through the background worker's report queue. */
+export async function saveMonthEntry(profileId: string, entry: MonthEntry): Promise<void> {
+  const months = await loadMonths(profileId);
+  months[entry.month] = entry;
+  await chrome.storage.local.set({ [monthsKey(profileId)]: months });
 }
 
 /**

@@ -49,6 +49,9 @@ export function onSettingsChanged(cb: (s: Settings) => void): void {
 /** chrome.storage.local key for where the owner dragged the ✨ button. */
 export const LAUNCHER_POS_KEY = "launcherPos";
 
+/** chrome.storage.session key for the side panel tab the owner last opened. */
+export const PANEL_TAB_KEY = "panelTab";
+
 /** chrome.storage.local key set once the owner dismisses the "panel on the left" tip. */
 export const LEFT_TIP_KEY = "leftTipDismissed";
 

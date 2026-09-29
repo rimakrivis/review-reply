@@ -7,10 +7,14 @@ import {
   isMonthComplete,
   isSameReview,
   mergeReviews,
+  missingMonths,
   monthKey,
+  previousMonth,
+  reportMonths,
+  reviewsInMonth,
   statsFor,
 } from "../src/archive";
-import type { Review } from "../src/types";
+import type { MonthEntry, Review, StoredReview } from "../src/types";
 
 const DAY = 86_400_000;
 const NOW = new Date(2026, 8, 27, 12).getTime();
@@ -110,5 +114,34 @@ describe("coverage", () => {
     expect(isMonthComplete(ranges, "2026-05", NOW)).toBe(false); // only from the 20th
     expect(isMonthComplete(ranges, "2026-09", NOW)).toBe(false); // not over yet
     expect(completeMonths(ranges, NOW)).toEqual(["2026-06", "2026-07", "2026-08"]);
+  });
+});
+
+describe("monthly report helpers", () => {
+  const at = (y: number, m: number, d: number) => new Date(y, m - 1, d, 12).getTime();
+  const ranges: [number, number][] = [[at(2026, 5, 20), NOW]];
+  const entry = (month: string): MonthEntry => ({
+    month,
+    stats: statsFor([]),
+    report: null,
+    createdAt: NOW,
+    opened: true,
+  });
+
+  it("finds the month before, across the new year", () => {
+    expect(previousMonth("2026-08")).toBe("2026-07");
+    expect(previousMonth("2026-01")).toBe("2025-12");
+  });
+  it("picks only the reviews dated in the month", () => {
+    const stored = [at(2026, 7, 31), at(2026, 8, 1), at(2026, 8, 31), at(2026, 9, 1)].map(
+      (date, i): StoredReview => ({ reviewerName: `R${i}`, rating: 5, text: "", date, id: String(i), firstSeen: NOW }),
+    );
+    expect(reviewsInMonth(stored, "2026-08").map((r) => r.reviewerName)).toEqual(["R1", "R2"]);
+  });
+  it("lists complete months and months with a report, newest first", () => {
+    expect(reportMonths(ranges, { "2026-02": entry("2026-02") }, NOW)).toEqual(["2026-08", "2026-07", "2026-06", "2026-02"]);
+  });
+  it("lists complete months still missing a report, oldest first", () => {
+    expect(missingMonths(ranges, { "2026-07": entry("2026-07") }, NOW)).toEqual(["2026-06", "2026-08"]);
   });
 });
