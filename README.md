@@ -15,9 +15,12 @@ A human always stays in control. The extension only types a draft into the reply
 - **Business profiles and templates.** Keep one profile per business and switch between them. Start from a Bar, Restaurant, Café, Hotel, Beauty salon or generic template. Export and import profiles as JSON.
 - **Side panel for the business.** Click the toolbar icon to switch business and make quick edits to its name, tone and facts. **⤢ Full view** opens the same screen in a normal, wide browser tab.
 - **Floating ✨ button.** On Google review pages, a small button floats in the corner. It opens the side panel or the full view. Drag it to move it, or hide it from its menu or in Settings.
+- **Review history and monthly reports.** While Google's review list is open (sorted by Newest), the extension saves every review it shows. The **📊 Reports** tab turns each complete month into a report: exact star counts compared with last month, plus an AI summary of 🚨 urgent reviews, praise, complaints with real quotes, changes and suggestions. Reports can be saved as PDF and written in the business's own language.
+- **Urgent topics.** Each business lists what must never be missed, such as violence or hygiene. Matching reviews appear first in the report.
+- **Backup.** **Export everything** saves all profiles, review history and reports in one file. **Import everything…** restores it on another computer.
 - **Safe by default.** Built-in rules stop the AI from admitting liability, promising refunds or repeating personal details. The prompt tells the model to treat review text as data, never as instructions. The sample reviews include an "ignore previous instructions" attempt so you can check this.
 - **Cheap.** Works with any OpenAI chat model. With `gpt-4o-mini`, a reply costs a small fraction of a cent.
-- **Private.** Your API key stays in your browser. Reviews are sent only to OpenAI. There is no server.
+- **Private.** Your API key stays in your browser. Reviews are sent only to OpenAI, and reports are made without reviewer names. There is no server.
 
 ![Settings page](docs/settings.png)
 
@@ -88,6 +91,10 @@ flowchart LR
 | File | What it does |
 |---|---|
 | [src/types.ts](src/types.ts) | Data shapes used everywhere: `Review`, `Profile`, `Situation`, `Settings`, messages. |
+| [src/archive.ts](src/archive.ts) | Saves collected reviews and reports per business, and works out which months are complete. |
+| [src/report-prompt.ts](src/report-prompt.ts) | Turns a month's reviews into AI instructions for a report, then checks the answer and counts mentions in code. |
+| [src/report-view.ts](src/report-view.ts) | Draws a monthly report in the side panel, the full view and the PDF. |
+| [src/backup.ts](src/backup.ts) | Builds, checks and restores the Export / Import everything file. |
 | [src/profiles.ts](src/profiles.ts) | Creates, copies, imports and exports business profiles as JSON. |
 | [src/profile-form.ts](src/profile-form.ts) | Connects profile input fields to a profile. Used by both Settings and the side panel. |
 | [src/templates/index.ts](src/templates/index.ts) | Starter playbooks for a bar, restaurant, café, hotel, beauty salon and a generic business. |
@@ -137,7 +144,7 @@ The extension has a fixed ID, set by the `key` in [public/manifest.json](public/
 2. Open `chrome://extensions` and click **Load unpacked** on the new folder. Chrome replaces the old version.
 3. Do **not** click **Remove** on the old version first. Removing an extension deletes its saved settings.
 
-As a backup, export your business profiles in Settings before updating.
+As a backup, click **Export everything** in Settings before updating.
 
 ## Choosing a model
 
@@ -186,7 +193,8 @@ test/                  unit tests and sample reviews
 
 - Google's review pages change without notice. If the draft bar stops appearing, the code that reads reviews needs updating. It is in [src/content/extract.ts](src/content/extract.ts).
 - The content script runs on `google.com`, `google.lt`, `google.co.uk`, `google.ie`, `google.de` and `business.google.com`. Add other country domains in [public/manifest.json](public/manifest.json).
-- Replies are generated in English. Change the first rule in a profile to use another language.
+- Replies are generated in English. Change the first rule in a profile to use another language. Reports use the profile's **Report language**.
+- Reports need the whole month. Sort Google's review list by **Newest** and scroll back far enough. Google shows about 100 reviews before you scroll.
 
 ## License
 

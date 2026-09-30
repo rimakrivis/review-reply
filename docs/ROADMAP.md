@@ -10,6 +10,7 @@ is discussed before it is built.
 | 0.1.0 | AI-drafted replies on Google review pages, business profiles, situations playbook, templates, demo page. |
 | 0.2.0 | Floating ✨ button on Google review pages; side panel for editing the business profile; full view in a wide tab. The side panel's Reply tab and the right-click menu were removed. |
 | 0.2.1 | Fixed extension ID, so updates keep saved settings even when the new version is in a different folder. |
+| 0.3.0 | Phase 2 steps 2.1–2.3: review history, urgent topics, report language, monthly reports in a 📊 Reports tab, Save as PDF, and Export / Import everything. |
 
 ---
 
@@ -40,7 +41,7 @@ Since old raw reviews are deleted, real use stays much lower.
 
 ### Steps
 
-#### Step 2.1: Collect reviews with dates
+#### Step 2.1: Collect reviews with dates ✅ 0.3.0
 - Read **every** review on the page, not only the one being replied to: name, stars, text, **date**, and whether
   the owner has already replied.
 - Understand Google's dates: "3 days ago", "a month ago", "2 years ago", "Edited …", and full dates. Older reviews
@@ -55,13 +56,13 @@ Since old raw reviews are deleted, real use stays much lower.
 - Recognise the owner's replies ("<business> · Owner"), and leave Google's extra lines out of the review text:
   "View full review", "Service / Food / Atmosphere", price ranges, noise level and group size.
 
-#### Step 2.2: Urgent topics in the business profile
+#### Step 2.2: Urgent topics in the business profile ✅ 0.3.0
 - Add an **Urgent topics** list to each profile, editable in Settings (next to the situations playbook).
 - Business templates come with sensible starting topics. For example, a bar gets fights, hygiene, drink spiking,
   security staff behaviour, discrimination and theft.
 - Profiles exported before this change still import correctly, with an empty list.
 
-#### Step 2.3: Monthly report and the Reports tab
+#### Step 2.3: Monthly report and the Reports tab ✅ 0.3.0
 - **Calculated exactly by code:** number of reviews, average rating, stars per level (5★ … 1★), and a comparison
   with last month, for example *"5★ +7 · 1★ −3 · average 4.1 → 4.4 ▲"*.
 - **Written by the AI:**
@@ -81,8 +82,7 @@ Since old raw reviews are deleted, real use stays much lower.
 - The yearly report is built from the monthly reports, and compared with the previous year when it exists.
 - Charts in the full view: average rating per month, reviews per month, and this month's stars against last
   month's.
-- **Save as PDF:** a clean, printable version of one report, using Chrome's own "Save as PDF", so no extra library
-  is needed.
+- ~~Save as PDF~~: already done in 0.3.0 for monthly reports; the yearly report gets it too.
 
 #### Step 2.5: Automatic routine
 - Each day, the extension checks whether a month has ended.
@@ -122,7 +122,7 @@ Once reports are ready, publish the extension on the Chrome Web Store:
 
 ## To discuss before starting Phase 2
 
-- **Report language:** English only, or the owner's language (for example Lithuanian)?
+- ~~**Report language**~~: decided, each profile has a Report language (0.3.0).
 - **Cost limit:** should Settings show roughly how much each report costs, with a monthly maximum?
 - **Unanswered count:** should it include old reviews collected while scrolling back, or only new ones?
 - **Several businesses:** one report per business, or also a combined overview?
