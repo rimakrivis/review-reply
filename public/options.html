@@ -105,6 +105,21 @@
       <p class="muted small">It floats in a corner and opens the side panel or the full view. Drag it to move it.</p>
     </section>
 
+    <section class="card">
+      <h2>7. Backup</h2>
+      <p class="muted small">One file with all profiles, collected reviews and reports. Use it to move to another computer or to keep a copy.</p>
+      <div class="row">
+        <button id="backup-export" type="button">Export everything</button>
+        <label class="check"><input id="backup-key" type="checkbox" /> Include API key</label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="backup-import" type="button">Import everything…</button>
+        <input id="backup-file" type="file" accept="application/json,.json" hidden />
+      </div>
+      <p class="muted small">Importing replaces all ReviewReply data in this browser. Keep the file private: it contains your guests' reviews.</p>
+      <div id="backup-msg" class="notice" hidden></div>
+    </section>
+
     <p class="muted small center">Try it without a Google account on the <a href="demo.html" target="_blank">demo review page</a>.</p>
   </main>
 

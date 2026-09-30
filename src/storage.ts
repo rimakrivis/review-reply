@@ -18,7 +18,7 @@ export function defaultSettings(): Settings {
 }
 
 /** Settings as saved, with defaults for anything an older version didn't save. */
-function withDefaults(saved: Partial<Settings> | undefined): Settings {
+export function withDefaults(saved: Partial<Settings> | undefined): Settings {
   const s = { ...defaultSettings(), ...saved };
   return { ...s, profiles: s.profiles.map(normalizeProfile) };
 }

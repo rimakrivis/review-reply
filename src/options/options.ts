@@ -1,3 +1,4 @@
+import { backupFileName, describeBackup, exportEverything, importEverything, parseBackup } from "../backup";
 import { bindProfileFields, fillProfileFields } from "../profile-form";
 import { emptySituation, emptyUrgentTopic, newId, parseProfileJson, profileFromTemplate, profileToJson } from "../profiles";
 import { activeProfile, loadSettings, MODEL_OPTIONS, onSettingsChanged, saveSettings } from "../storage";
@@ -31,11 +32,21 @@ function save(now = false) {
   saveTimer = window.setTimeout(run, 400);
 }
 
-function notify(kind: "ok" | "error", text: string) {
-  profileMsg.className = `notice ${kind}`;
-  profileMsg.textContent = text;
-  profileMsg.hidden = false;
-  setTimeout(() => (profileMsg.hidden = true), 5000);
+function notify(kind: "ok" | "error", text: string, box = profileMsg) {
+  box.className = `notice ${kind}`;
+  box.textContent = text;
+  box.hidden = false;
+  setTimeout(() => (box.hidden = true), 5000);
+}
+
+/** Makes the browser save `text` as a file in Downloads. */
+function download(text: string, fileName: string) {
+  const blob = new Blob([text], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function current(): Profile | undefined {
@@ -260,12 +271,7 @@ $("#delete").addEventListener("click", () => {
 $("#export").addEventListener("click", () => {
   const p = current();
   if (!p) return;
-  const blob = new Blob([profileToJson(p)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `${(p.businessName || "profile").replace(/[^\w-]+/g, "-").toLowerCase()}.reviewreply.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  download(profileToJson(p), `${(p.businessName || "profile").replace(/[^\w-]+/g, "-").toLowerCase()}.reviewreply.json`);
 });
 
 $("#import").addEventListener("click", () => $<HTMLInputElement>("#import-file").click());
@@ -298,13 +304,47 @@ onSettingsChanged((s) => {
   if (settings) settings.showLauncher = launcherBox.checked = s.showLauncher;
 });
 
+/* ---------- Backup ---------- */
+
+const backupMsg = $("#backup-msg");
+
+$("#backup-export").addEventListener("click", async () => {
+  await save(true);
+  const backup = await exportEverything($<HTMLInputElement>("#backup-key").checked);
+  download(JSON.stringify(backup), backupFileName());
+  notify("ok", `Exported ${describeBackup(backup)}.`, backupMsg);
+});
+
+$("#backup-import").addEventListener("click", () => $<HTMLInputElement>("#backup-file").click());
+$<HTMLInputElement>("#backup-file").addEventListener("change", async (e) => {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file) return;
+  try {
+    const backup = parseBackup(await file.text());
+    const what = describeBackup(backup);
+    if (!confirm(`This replaces all ReviewReply data in this browser with the backup (${what}). Continue?`)) return;
+    clearTimeout(saveTimer); // a pending auto-save would overwrite the imported settings
+    await importEverything(backup);
+    showSettings(await loadSettings());
+    notify("ok", `Imported ${what}.`, backupMsg);
+  } catch (err) {
+    notify("error", `Could not import: ${err instanceof Error ? err.message : err}`, backupMsg);
+  }
+});
+
 /* ---------- Start ---------- */
 
-loadSettings().then((s) => {
+function showSettings(s: Settings) {
   settings = s;
   keyInput.value = s.apiKey;
   launcherBox.checked = s.showLauncher;
   renderModel();
   renderProfiles();
+}
+
+loadSettings().then((s) => {
+  showSettings(s);
   if (!s.apiKey) keyInput.focus();
 });
