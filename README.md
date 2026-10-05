@@ -1,6 +1,6 @@
 # ✨ ReviewReply
 
-**A Chrome extension that drafts on-brand replies to Google Business reviews with AI, following each business's own playbook of situations.**
+**A Chrome extension that drafts on-brand replies to Google, Tripadvisor and Facebook reviews with AI, following each business's own playbook of situations.**
 
 Small businesses get the same kinds of reviews again and again: a long wait at the bar, a refused entry, a wrong bill, praise for a favourite bartender. Answering each one well takes time, and generic AI replies sound generic. ReviewReply lets you describe how *your* business handles each situation once. It then drafts a reply for every review in one click, right inside Google's review page.
 
@@ -15,7 +15,8 @@ A human always stays in control. The extension only types a draft into the reply
 - **Business profiles and templates.** Keep one profile per business and switch between them. Start from a Bar, Restaurant, Café, Hotel, Beauty salon or generic template. Export and import profiles as JSON.
 - **Side panel for the business.** Click the toolbar icon to switch business and make quick edits to its name, tone and facts. **⤢ Full view** opens the same screen in a normal, wide browser tab.
 - **Floating ✨ button.** On Google review pages, a small button floats in the corner. It opens the side panel or the full view. Drag it to move it, or hide it from its menu or in Settings.
-- **Review history and monthly reports.** While Google's review list is open (sorted by Newest), the extension saves every review it shows. The **📊 Reports** tab turns each complete month into a report: exact star counts compared with last month, plus an AI summary of 🚨 urgent reviews, praise, complaints with real quotes, changes and suggestions. Reports can be saved as PDF and written in the business's own language.
+- **Several review sites.** Works on Google, on Tripadvisor's owner pages and on a Facebook page's Reviews tab. Each saved review remembers its site, and reports show the numbers per site.
+- **Review history and monthly reports.** While a review list is open (sorted by newest), the extension saves every review it shows. The **📊 Reports** tab turns each complete month into a report: exact star counts compared with last month, plus an AI summary of 🚨 urgent reviews, praise, complaints with real quotes, changes and suggestions. A **yearly report** is built from the monthly reports, with month-by-month charts and a comparison with last year. Reports can be saved as PDF and written in the business's own language.
 - **Urgent topics.** Each business lists what must never be missed, such as violence or hygiene. Matching reviews appear first in the report.
 - **Backup.** **Export everything** saves all profiles, review history and reports in one file. **Import everything…** restores it on another computer.
 - **Safe by default.** Built-in rules stop the AI from admitting liability, promising refunds or repeating personal details. The prompt tells the model to treat review text as data, never as instructions. The sample reviews include an "ignore previous instructions" attempt so you can check this.
@@ -92,8 +93,10 @@ flowchart LR
 |---|---|
 | [src/types.ts](src/types.ts) | Data shapes used everywhere: `Review`, `Profile`, `Situation`, `Settings`, messages. |
 | [src/archive.ts](src/archive.ts) | Saves collected reviews and reports per business, and works out which months are complete. |
+| [src/content/sites.ts](src/content/sites.ts) | Picks the reader for the page's review site: Google ([extract.ts](src/content/extract.ts)), Tripadvisor ([tripadvisor.ts](src/content/tripadvisor.ts)) or Facebook ([facebook.ts](src/content/facebook.ts)). |
 | [src/report-prompt.ts](src/report-prompt.ts) | Turns a month's reviews into AI instructions for a report, then checks the answer and counts mentions in code. |
-| [src/report-view.ts](src/report-view.ts) | Draws a monthly report in the side panel, the full view and the PDF. |
+| [src/year-report.ts](src/year-report.ts) | Turns a year's monthly reports into AI instructions for a yearly report, then checks the answer and adds up mentions in code. |
+| [src/report-view.ts](src/report-view.ts) | Draws monthly and yearly reports in the side panel, the full view and the PDF. |
 | [src/backup.ts](src/backup.ts) | Builds, checks and restores the Export / Import everything file. |
 | [src/profiles.ts](src/profiles.ts) | Creates, copies, imports and exports business profiles as JSON. |
 | [src/profile-form.ts](src/profile-form.ts) | Connects profile input fields to a profile. Used by both Settings and the side panel. |
@@ -192,7 +195,10 @@ test/                  unit tests and sample reviews
 ## Limitations
 
 - Google's review pages change without notice. If the draft bar stops appearing, the code that reads reviews needs updating. It is in [src/content/extract.ts](src/content/extract.ts).
-- The content script runs on `google.com`, `google.lt`, `google.co.uk`, `google.ie`, `google.de` and `business.google.com`. Add other country domains in [public/manifest.json](public/manifest.json).
+- The content script runs on `google.com`, `google.lt`, `google.co.uk`, `google.ie`, `google.de`, `business.google.com` Tripadvisor's `.com`, `.nl`, `.co.uk`, `.ie` and `.de`, and `facebook.com`. Add other country domains in [public/manifest.json](public/manifest.json).
+- Tripadvisor is read in English. Its months count as complete when the list is sorted by **Most recent**, without filters, and the pages are opened in order from page 1.
+- Facebook has no stars: reviews count as "recommends" or "doesn't recommend", and reports show the share that recommends. Facebook is read in English or Lithuanian. Reviews are collected only on the page's **Reviews** tab; scroll down to collect older ones.
+- A business uses only the sites whose reviews were opened for it. When a month is still missing on one of them, the Reports tab offers to open that site or make the report without it.
 - Replies are generated in English. Change the first rule in a profile to use another language. Reports use the profile's **Report language**.
 - Reports need the whole month. Sort Google's review list by **Newest** and scroll back far enough. Google shows about 100 reviews before you scroll.
 

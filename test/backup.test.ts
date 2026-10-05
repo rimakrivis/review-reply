@@ -13,6 +13,7 @@ function stored(): Record<string, unknown> {
       "2026-08": { month: "2026-08", stats: {}, report: { overview: "ok" }, createdAt: 1, opened: true },
       "2026-07": { month: "2026-07", stats: {}, report: null, createdAt: 1, opened: false },
     },
+    "years:p1": { "2026": { year: "2026", months: [], stats: {}, report: { overview: "ok" }, createdAt: 1, opened: false } },
     launcherPos: { x: 1, y: 2 },
   };
 }
@@ -24,9 +25,9 @@ describe("backup", () => {
     expect(back.settings.apiKey).toBe("sk-secret");
     expect(back.settings.profiles[0].businessName).toBe("Lost in Amsterdam");
     expect(back.settings.profiles[0].id).toBe("p1"); // ids are kept so the archive keys still match
-    expect(Object.keys(back.data).sort()).toEqual(["collect:p1", "months:p1", "reviews:p1"]);
+    expect(Object.keys(back.data).sort()).toEqual(["collect:p1", "months:p1", "reviews:p1", "years:p1"]);
     expect(back.exportedAt).toBe("2026-09-29T00:00:00.000Z");
-    expect(describeBackup(back)).toBe("1 business, 1 reviews, 1 monthly reports");
+    expect(describeBackup(back)).toBe("1 business, 1 reviews, 1 monthly reports, 1 yearly report");
   });
 
   it("leaves the API key out unless asked", () => {
@@ -47,7 +48,7 @@ describe("backup", () => {
     const now = { ...stored(), "reviews:old": [], "months:old": {}, leftTipDismissed: true };
     const { set, remove } = restoreChanges(now, b);
     expect(remove.sort()).toEqual(["months:old", "reviews:old"]);
-    expect(Object.keys(set).sort()).toEqual(["collect:p1", "months:p1", "reviews:p1", "settings"]);
+    expect(Object.keys(set).sort()).toEqual(["collect:p1", "months:p1", "reviews:p1", "settings", "years:p1"]);
   });
 
   it("fills in fields that older versions didn't save", () => {

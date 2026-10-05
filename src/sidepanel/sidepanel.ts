@@ -1,19 +1,29 @@
 import {
   clearHistory,
+  collectedSources,
   collectKey,
   completeMonths,
+  coverageOf,
+  isYearOutdated,
   loadCollectInfo,
   loadMonths,
   loadReviews,
+  loadYears,
   missingMonths,
+  monthSites,
   monthsKey,
   previousMonth,
+  readyMonths,
   reportMonths,
+  reportYears,
   reviewsKey,
+  siteCollect,
+  sourceOf,
+  yearsKey,
 } from "../archive";
 import { bindProfileFields, fillProfileFields, readProfileFields } from "../profile-form";
 import { monthName } from "../report-prompt";
-import { renderMonthReport } from "../report-view";
+import { renderMonthReport, renderYearReport } from "../report-view";
 import {
   activeProfile,
   fullViewUrl,
@@ -23,7 +33,9 @@ import {
   PANEL_TAB_KEY,
   saveSettings,
 } from "../storage";
-import type { Message, MonthEntry, ReportResponse, Settings } from "../types";
+import type { CollectInfo } from "../archive";
+import { SOURCE_NAMES, SOURCES, type Message, type MonthEntry, type ReportResponse, type Settings, type Source, type YearEntry } from "../types";
+import { isYear, periodName } from "../year-report";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 
@@ -121,7 +133,7 @@ function initialTab() {
     .catch(() => {});
 }
 
-/* ---------- Monthly reports ---------- */
+/* ---------- Monthly and yearly reports ---------- */
 
 const monthSel = $<HTMLSelectElement>("#report-month");
 const makeBtn = $<HTMLButtonElement>("#make-report");
@@ -131,10 +143,14 @@ const statusBox = $("#report-status");
 const reportEl = $("#report");
 
 let months: Record<string, MonthEntry> = {};
-/** The business the month list belongs to. */
+let years: Record<string, YearEntry> = {};
+/** The business the report list belongs to. */
 let reportsFor = "";
-let selectedMonth = params.get("month") ?? "";
+/** The report on screen: a month ("2026-08") or a year ("2026"). */
+let selectedPeriod = params.get("report") ?? "";
 let missingCount = 0;
+let missingByYear: Record<string, number> = {};
+let collectInfo: CollectInfo | undefined;
 let busy = false;
 /** Set when the side panel opened this full view to save a PDF. */
 let printWhenReady = isFull && params.get("print") === "1";
@@ -145,12 +161,39 @@ function setStatus(kind: "busy" | "ok" | "error" | "", text = "") {
   statusBox.textContent = text;
 }
 
-function monthOptionLabel(m: string): string {
-  const e = months[m];
-  return `${monthName(m)}${!e ? " · no report yet" : e.opened ? "" : " · new"}`;
+/** The saved report for a month or a year, if there is one. */
+function entryFor(period: string): MonthEntry | YearEntry | undefined {
+  return isYear(period) ? years[period] : months[period];
 }
 
-/** Loads the selected business's reports and fills the month picker. */
+/** The sites in use that are not complete yet for a month, so its report would leave them out. Never for years. */
+function waitingSites(period: string): Source[] {
+  if (isYear(period)) return [];
+  const profile = settings && activeProfile(settings);
+  return monthSites(collectInfo, period, Date.now(), profile?.skippedSources ?? []).waiting;
+}
+
+function siteNames(list: Source[]): string {
+  return list.map((s) => SOURCE_NAMES[s]).join(" and ");
+}
+
+function optionLabel(period: string): string {
+  const e = entryFor(period);
+  if (!e) {
+    const waiting = waitingSites(period);
+    return `${periodName(period)} · ${waiting.length ? `waiting for ${siteNames(waiting)}` : "no report yet"}`;
+  }
+  return `${periodName(period)}${e.opened ? "" : " · new"}`;
+}
+
+function optionGroup(label: string, periods: string[]): HTMLOptGroupElement {
+  const group = document.createElement("optgroup");
+  group.label = label;
+  group.append(...periods.map((p) => new Option(optionLabel(p), p, false, p === selectedPeriod)));
+  return group;
+}
+
+/** Loads the selected business's reports and fills the report picker. */
 async function renderReports() {
   const profile = settings && activeProfile(settings);
   $("#reports-card").hidden = !profile;
@@ -159,36 +202,93 @@ async function renderReports() {
     return;
   }
   if (profile.id !== reportsFor) {
-    if (reportsFor) selectedMonth = "";
+    if (reportsFor) selectedPeriod = "";
     reportsFor = profile.id;
     setStatus("");
   }
-  const [loaded, info] = await Promise.all([loadMonths(profile.id), loadCollectInfo(profile.id)]);
+  const [loaded, loadedYears, info] = await Promise.all([
+    loadMonths(profile.id),
+    loadYears(profile.id),
+    loadCollectInfo(profile.id),
+  ]);
   if (profile.id !== reportsFor) return; // the owner switched business while loading
   months = loaded;
+  years = loadedYears;
+  collectInfo = info;
   const now = Date.now();
-  const list = reportMonths(info?.coverage ?? [], months, now);
-  missingCount = missingMonths(info?.coverage ?? [], months, now).length;
+  const skip = profile.skippedSources ?? [];
+  const list = reportMonths(readyMonths(info, now, skip), months);
+  const yearList = reportYears(list, years);
+  const missing = missingMonths(coverageOf(info, skip), months, now);
+  missingCount = missing.length;
+  missingByYear = {};
+  for (const m of missing) missingByYear[m.slice(0, 4)] = (missingByYear[m.slice(0, 4)] ?? 0) + 1;
 
   $("#reports-empty").hidden = list.length > 0;
   $("#reports-empty").textContent =
-    "No complete months yet. Open your Google reviews, sort them by Newest, and scroll back past the start of last month. Then its report can be made.";
+    "No complete months yet. Open your reviews on each site, sorted by newest, and go back past the start of last month. Then its report can be made.";
   $("#reports-controls").hidden = !list.length;
 
-  if (!list.includes(selectedMonth)) {
-    // Newest unopened report first, then the newest report, then the newest month.
-    selectedMonth =
-      list.find((m) => months[m] && !months[m].opened) ?? list.find((m) => months[m]) ?? list[0] ?? "";
+  if (!list.includes(selectedPeriod) && !yearList.includes(selectedPeriod)) {
+    // Newest unopened report first (yearly before monthly), then the newest monthly report, then the newest month.
+    const unopened = (p: string) => {
+      const e = entryFor(p);
+      return e && !e.opened;
+    };
+    selectedPeriod =
+      yearList.find(unopened) ?? list.find(unopened) ?? list.find((m) => months[m]) ?? list[0] ?? "";
   }
-  monthSel.replaceChildren(...list.map((m) => new Option(monthOptionLabel(m), m, false, m === selectedMonth)));
+  monthSel.replaceChildren(optionGroup("Years", yearList), optionGroup("Months", list));
   missingBtn.textContent = missingCount ? `Make missing reports (${missingCount})` : "Make missing reports";
   showSelectedReport();
 }
 
+/** Explains which site a month is still waiting for, with the choice to make the report without it. */
+function showWaiting(waiting: Source[]) {
+  const box = $("#report-sites");
+  box.hidden = !waiting.length;
+  if (!waiting.length) return box.replaceChildren();
+  const names = siteNames(waiting);
+  const p = document.createElement("p");
+  p.textContent =
+    `${monthName(selectedPeriod)} is not complete on ${names} yet. To include it, open ${names} sorted by newest ` +
+    `and go back to ${monthName(selectedPeriod)}. Or leave it out:`;
+  const without = document.createElement("button");
+  without.type = "button";
+  without.textContent = `Make without ${names}`;
+  without.disabled = busy;
+  without.onclick = () => makeMonth(selectedPeriod, waiting);
+  const always = document.createElement("button");
+  always.type = "button";
+  always.textContent = `Always leave ${names} out`;
+  always.title = "For this business. You can use it again from the Review history card.";
+  always.disabled = busy;
+  always.onclick = () => setSkipped(waiting, true);
+  const row = document.createElement("div");
+  row.className = "row";
+  row.append(without, always);
+  box.replaceChildren(p, row);
+}
+
+/** Leaves sites out of (or back in) this business's reports. */
+async function setSkipped(sources: Source[], skip: boolean) {
+  const profile = settings && activeProfile(settings);
+  if (!profile) return;
+  const now = new Set(profile.skippedSources ?? []);
+  for (const s of sources) {
+    if (skip) now.add(s);
+    else now.delete(s);
+  }
+  profile.skippedSources = [...now];
+  await saveSettings(settings);
+}
+
 function showSelectedReport() {
-  const entry = months[selectedMonth];
+  const entry = entryFor(selectedPeriod);
+  const waiting = waitingSites(selectedPeriod);
+  showWaiting(waiting);
   makeBtn.textContent = entry ? "Make again" : "Make report";
-  makeBtn.disabled = busy || !selectedMonth;
+  makeBtn.disabled = busy || !selectedPeriod || waiting.length > 0;
   missingBtn.disabled = busy || !missingCount;
   pdfBtn.hidden = !entry;
   reportEl.hidden = !entry;
@@ -196,7 +296,15 @@ function showSelectedReport() {
     reportEl.replaceChildren();
     return;
   }
-  renderMonthReport(reportEl, entry, months[previousMonth(selectedMonth)]);
+  if (isYear(selectedPeriod)) {
+    const year = entry as YearEntry;
+    renderYearReport(reportEl, year, months, {
+      previous: years[String(Number(selectedPeriod) - 1)],
+      outdated: isYearOutdated(year, months),
+    });
+  } else {
+    renderMonthReport(reportEl, entry as MonthEntry, months[previousMonth(selectedPeriod)]);
+  }
   markShownReportOpened();
   if (printWhenReady) {
     printWhenReady = false;
@@ -206,15 +314,15 @@ function showSelectedReport() {
 
 /** A report counts as opened once the owner has it on screen. */
 function markShownReportOpened() {
-  const entry = months[selectedMonth];
+  const entry = entryFor(selectedPeriod);
   if (currentTab !== "reports" || !entry || entry.opened || !reportsFor) return;
   entry.opened = true; // locally too, so it is only sent once
-  const msg: Message = { type: "markReportOpened", profileId: reportsFor, month: selectedMonth };
+  const msg: Message = { type: "markReportOpened", profileId: reportsFor, period: selectedPeriod };
   chrome.runtime.sendMessage(msg).catch(() => {});
 }
 
 monthSel.addEventListener("change", () => {
-  selectedMonth = monthSel.value;
+  selectedPeriod = monthSel.value;
   setStatus("");
   showSelectedReport();
 });
@@ -235,14 +343,31 @@ async function runReportJob(msg: Message, waiting: string) {
 }
 
 makeBtn.addEventListener("click", () => {
-  const month = selectedMonth;
-  if (!reportsFor || !month) return;
-  if (months[month] && !confirm(`Make the ${monthName(month)} report again? The current one will be replaced.`)) return;
-  runReportJob(
-    { type: "makeMonthReport", profileId: reportsFor, month },
-    `Making the ${monthName(month)} report… This can take up to a minute.`,
-  );
+  const period = selectedPeriod;
+  if (!reportsFor || !period) return;
+  if (entryFor(period) && !confirm(`Make the ${periodName(period)} report again? The current one will be replaced.`)) return;
+  if (isYear(period)) {
+    const n = missingByYear[period] ?? 0;
+    runReportJob(
+      { type: "makeYearReport", profileId: reportsFor, year: period },
+      n
+        ? `Making ${n} missing monthly report${n === 1 ? "" : "s"} first, then the ${period} report… This can take about a minute per report.`
+        : `Making the ${period} report… This can take up to a minute.`,
+    );
+    return;
+  }
+  makeMonth(period);
 });
+
+/** Makes one month's report, leaving out `skip` sites for this report only. */
+function makeMonth(month: string, skip: Source[] = []) {
+  if (!reportsFor) return;
+  if (skip.length && months[month] && !confirm(`Make the ${monthName(month)} report again? The current one will be replaced.`)) return;
+  runReportJob(
+    { type: "makeMonthReport", profileId: reportsFor, month, skip },
+    `Making the ${monthName(month)} report${skip.length ? ` without ${siteNames(skip)}` : ""}… This can take up to a minute.`,
+  );
+}
 
 missingBtn.addEventListener("click", () => {
   if (!reportsFor || !missingCount) return;
@@ -257,7 +382,7 @@ missingBtn.addEventListener("click", () => {
 function printReport() {
   const profile = settings && activeProfile(settings);
   const old = document.title;
-  document.title = `ReviewReply – ${profile?.businessName || "Business"} – ${monthName(selectedMonth)}`;
+  document.title = `ReviewReply – ${profile?.businessName || "Business"} – ${periodName(selectedPeriod)}`;
   window.addEventListener("afterprint", () => (document.title = old), { once: true });
   window.print();
 }
@@ -265,7 +390,7 @@ function printReport() {
 pdfBtn.addEventListener("click", () => {
   if (isFull) return printReport();
   // Printing from the narrow side panel works badly, so the wide full view opens and prints instead.
-  chrome.tabs.create({ url: `${fullViewUrl()}&tab=reports&month=${selectedMonth}&print=1` });
+  chrome.tabs.create({ url: `${fullViewUrl()}&tab=reports&report=${selectedPeriod}&print=1` });
 });
 
 /* ---------- Review history ---------- */
@@ -285,25 +410,74 @@ function daysAgoLabel(ms: number): string {
   return days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
 }
 
-/** Shows how many reviews are saved for the selected business and when they were last collected. */
+/** "Jan 2026 – Sep 2026", or "" when there are no months. */
+function monthSpan(list: string[]): string {
+  return list.length ? `${monthLabel(monthStart(list[0]))} – ${monthLabel(monthStart(list[list.length - 1]))}` : "";
+}
+
+/** How to get a site's list into the order that proves months complete. */
+const SORT_HELP: Record<Source, string> = {
+  google: "Google's review list is not sorted by Newest. Switch the sort to Newest",
+  tripadvisor: "Tripadvisor's review list is not sorted by Most recent, or a filter is on. Sort by Most recent without filters",
+  facebook: "Facebook's reviews are not in order from newest to oldest. Open the page's Reviews tab",
+};
+
+/** Shows, per review site, how many reviews are saved for the selected business and which months are complete. */
 async function renderHistory() {
   const profile = settings && activeProfile(settings);
   $("#history").hidden = !profile;
   if (!profile) return;
   const [reviews, info] = await Promise.all([loadReviews(profile.id), loadCollectInfo(profile.id)]);
   $("#history-business").textContent = profile.businessName || "(unnamed business)";
-  // Reviews are saved newest first.
-  $("#history-count").textContent = reviews.length
-    ? `${reviews.length} review${reviews.length === 1 ? "" : "s"} · ${monthLabel(reviews[reviews.length - 1].date)} – ${monthLabel(reviews[0].date)}`
-    : "No reviews collected yet.";
-  $("#history-updated").textContent = info ? `Last collected: ${daysAgoLabel(info.lastCollectedAt)}` : "";
-  const complete = completeMonths(info?.coverage ?? [], Date.now());
+  const now = Date.now();
+
+  // Sites with saved reviews or collection state, Google first.
+  const sources = SOURCES.filter(
+    (src) => collectedSources(info).includes(src) || reviews.some((r) => sourceOf(r) === src),
+  );
+  $("#history-sites").replaceChildren(
+    ...sources.map((src) => {
+      const own = reviews.filter((r) => sourceOf(r) === src); // saved newest first
+      const site = siteCollect(info, src);
+      const complete = completeMonths(site?.coverage ?? [], now);
+      const li = document.createElement("li");
+      const parts = [
+        `${own.length} review${own.length === 1 ? "" : "s"}`,
+        own.length ? `${monthLabel(own[own.length - 1].date)} – ${monthLabel(own[0].date)}` : "",
+        site ? `last collected ${daysAgoLabel(site.lastCollectedAt)}` : "",
+        complete.length ? `complete: ${monthSpan(complete)}` : "no complete months yet",
+      ].filter(Boolean);
+      const skipped = (profile.skippedSources ?? []).includes(src);
+      if (skipped) parts.push("left out of reports");
+      const b = document.createElement("b");
+      b.textContent = `${SOURCE_NAMES[src]}: `;
+      li.append(b, parts.join(" · "));
+      if (skipped) {
+        const again = document.createElement("button");
+        again.type = "button";
+        again.className = "link";
+        again.textContent = "Use again";
+        again.onclick = () => setSkipped([src], false);
+        li.append(" ", again);
+      }
+      return li;
+    }),
+  );
+  $("#history-count").textContent = reviews.length ? "" : "No reviews collected yet.";
+  $("#history-count").hidden = !!reviews.length;
+
+  const complete = completeMonths(coverageOf(info, profile.skippedSources), now);
   $("#history-complete").textContent = complete.length
-    ? `Complete months: ${monthLabel(monthStart(complete[0]))} – ${monthLabel(monthStart(complete[complete.length - 1]))}`
+    ? `Complete months${sources.length > 1 ? " on every site" : ""}: ${monthSpan(complete)}`
     : reviews.length
       ? "No complete months yet."
       : "";
-  $("#history-sort-warning").hidden = info?.lastSortedByNewest !== false;
+
+  const unsorted = sources.filter((src) => siteCollect(info, src)?.lastSortedByNewest === false);
+  $("#history-sort-warning").hidden = !unsorted.length;
+  $("#history-sort-warning").textContent = unsorted
+    .map((src) => `${SORT_HELP[src]} so ReviewReply can tell which months are complete.`)
+    .join(" ");
   $("#clear-history").hidden = !reviews.length;
 }
 
@@ -320,7 +494,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   const profile = settings && activeProfile(settings);
   if (area !== "local" || !profile) return;
   if (changes[reviewsKey(profile.id)] || changes[collectKey(profile.id)]) renderHistory();
-  if (changes[monthsKey(profile.id)] || changes[collectKey(profile.id)]) renderReports();
+  if (changes[monthsKey(profile.id)] || changes[yearsKey(profile.id)] || changes[collectKey(profile.id)]) renderReports();
 });
 
 /** Saves the profile shortly after typing stops. Reads the fields at save time so no keystroke is lost. */

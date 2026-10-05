@@ -7,6 +7,11 @@ header a { text-decoration: none; font-size: 13px; }
 header button { padding: 4px 10px; font-size: 13px; }
 
 .business label { margin: 0; }
+.sites { padding-left: 18px; margin: 8px 0 0; }
+.sites li + li { margin-top: 2px; }
+button.link { border: none; background: none; padding: 0; color: var(--accent); text-decoration: underline; font-size: inherit; }
+#report-sites { margin-top: 10px; }
+#report-sites p { margin: 0 0 8px; }
 
 .tip { display: flex; align-items: flex-start; gap: 8px; background: var(--accent-soft); color: var(--accent-text); }
 .tip .grow { flex: 1; }
@@ -55,6 +60,16 @@ body.full #panel-reports { max-width: 820px; }
 .theme blockquote { margin: 4px 0 0; padding-left: 10px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
 .report-foot { margin-top: 16px; }
 
+/* Yearly report: month-by-month charts. Two separate charts, since reviews and stars use different scales. */
+.chart-pair { display: grid; grid-template-columns: 1fr; gap: 16px; }
+body.full .chart-pair { grid-template-columns: 1fr 1fr; }
+.month-chart { margin: 4px 0 0; display: flex; flex-direction: column; gap: 4px; }
+.month-chart figcaption { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 2px; }
+.chart-row { display: grid; grid-template-columns: 32px 1fr 48px; gap: 8px; align-items: center; font-size: 13px; padding: 1px 0; border-radius: 4px; }
+.chart-row:hover { background: var(--accent-soft); }
+.chart-label { color: var(--muted); }
+.chart-value { text-align: right; font-variant-numeric: tabular-nums; }
+
 /* Save as PDF: print only the report, on a white page. */
 @media print {
   :root, :root:not([data-theme="light"]) {
@@ -68,6 +83,7 @@ body.full #panel-reports { max-width: 820px; }
   .report { border: none; padding: 0; }
   .bar-fill { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .report-section.urgent { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-  .theme, .urgent-item, .tiles, .stars { break-inside: avoid; }
+  .theme, .urgent-item, .tiles, .stars, .month-chart { break-inside: avoid; }
+  .chart-pair { grid-template-columns: 1fr 1fr !important; }
   .report-section h3 { break-after: avoid; }
 }

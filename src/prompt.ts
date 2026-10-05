@@ -1,4 +1,4 @@
-import type { DraftRequest, DraftResult, Profile } from "./types";
+import { SOURCE_NAMES, type DraftRequest, type DraftResult, type Profile, type Source } from "./types";
 
 export interface Prompt {
   system: string;
@@ -25,7 +25,7 @@ function section(title: string, body: string): string {
   return text ? `## ${title}\n${text}\n` : "";
 }
 
-export function buildSystemPrompt(p: Profile): string {
+export function buildSystemPrompt(p: Profile, source: Source = "google"): string {
   const situations = p.situations
     .map((s, i) => {
       const lines = [`${i + 1}. ${s.name}`];
@@ -41,7 +41,7 @@ export function buildSystemPrompt(p: Profile): string {
   const type = p.businessType.trim() ? ` (${p.businessType.trim()})` : "";
 
   return [
-    `You write the owner's public replies to Google reviews for ${name}${type}.`,
+    `You write the owner's public replies to ${SOURCE_NAMES[source]} reviews for ${name}${type}.`,
     "Pick the playbook situation that best matches the review, then write one reply that follows that situation's guidance, the tone, and every rule.",
     "If no situation fits, use 'None' and follow the rules and tone.",
     "Only use facts listed below. Never invent opening hours, prices, names, events, or contact details.",
@@ -63,15 +63,17 @@ export function buildSystemPrompt(p: Profile): string {
     .join("\n");
 }
 
-function stars(rating: number): string {
-  return rating >= 1 && rating <= 5 ? `${rating} out of 5 stars` : "unknown";
+/** "4 out of 5 stars", or for Facebook "recommends the business" / "does not recommend the business". */
+function rating(review: DraftRequest["review"]): string {
+  if (review.recommends !== undefined) return review.recommends ? "recommends the business" : "does not recommend the business";
+  return review.rating >= 1 && review.rating <= 5 ? `${review.rating} out of 5 stars` : "unknown";
 }
 
 export function buildUserPrompt(req: DraftRequest): string {
   const { review } = req;
   const parts = [
     `Reviewer name: ${review.reviewerName.trim() || "unknown"}`,
-    `Rating: ${stars(review.rating)}`,
+    `Rating: ${rating(review)}`,
     "Review text:",
     "<review>",
     review.text.trim() || "(no text, rating only)",
@@ -93,7 +95,7 @@ export function buildUserPrompt(req: DraftRequest): string {
 }
 
 export function buildPrompt(profile: Profile, req: DraftRequest): Prompt {
-  return { system: buildSystemPrompt(profile), user: buildUserPrompt(req) };
+  return { system: buildSystemPrompt(profile, req.review.source), user: buildUserPrompt(req) };
 }
 
 /** Parses the model's JSON answer. Tolerates code fences. Throws on unusable output. */

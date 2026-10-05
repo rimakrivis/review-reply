@@ -1,11 +1,12 @@
 import type { DraftResponse, DraftResult, Message, Variant } from "../types";
-import { extractAllReviews, extractReview, findReviewContainer, isSortedByNewest, UI_ATTR } from "./extract";
+import { UI_ATTR } from "./extract";
+import { siteFor } from "./sites";
 import { extensionAlive } from "./alive";
 import { initLauncher, refreshLauncher } from "./launcher";
 
 /**
- * Adds a "Draft reply" bar above every review reply box on the page.
- * The bar lives in a Shadow DOM so Google's CSS cannot break it (and ours cannot break Google's).
+ * Adds a "Draft reply" bar above every review reply box on the page (Google, Tripadvisor, …: see sites.ts).
+ * The bar lives in a Shadow DOM so the site's CSS cannot break it (and ours cannot break the site's).
  * Nothing is ever posted: the draft is only typed into the reply box.
  */
 
@@ -99,8 +100,8 @@ function attach(editor: HTMLElement, container: Element): void {
   };
 
   const run = async (variant: Variant) => {
-    const review = extractReview(container);
-    if (!review.text && !review.rating) {
+    const review = siteFor(location).extractReview(container);
+    if (!review.text && !review.rating && review.recommends === undefined) {
       show("error", "Couldn't read this review. Reload the page and try again.");
       return;
     }
@@ -142,12 +143,13 @@ function isCandidate(el: Element): el is HTMLElement {
 }
 
 export function scan(root: ParentNode = document): number {
+  const site = siteFor(location);
   let added = 0;
   for (const el of Array.from(root.querySelectorAll(EDITOR_SELECTOR))) {
     if (!isCandidate(el)) continue;
     // Nested editors (role=textbox inside contenteditable) only get one bar.
     if (el.parentElement?.closest(EDITOR_SELECTOR)) continue;
-    const container = findReviewContainer(el);
+    const container = site.findReviewContainer(el);
     if (!container) continue;
     attach(el, container);
     added++;
@@ -158,26 +160,31 @@ export function scan(root: ParentNode = document): number {
 let lastSent = "";
 
 /**
- * Sends every review on Google's full review list to the background worker, which saves it in the business's
- * review history. Only sends when the reviews on the page changed (Google loads more as the owner scrolls).
- * Pages without Google's sort button (e.g. the short review previews on the search page) are not collected.
+ * Sends every review on the site's review list to the background worker, which saves it in the business's
+ * review history. Only sends when the reviews on the page changed (Google loads more as the owner scrolls,
+ * Tripadvisor shows another page or opens another review).
+ * Pages without a sort order (e.g. Google's short review previews on the search page) are not collected.
  */
 export function collect(root: ParentNode = document): void {
   // The demo page is an extension page: never mix its sample reviews into a real business's history.
   if (location.protocol === "chrome-extension:" || !extensionAlive()) return;
-  const reviews = extractAllReviews(root);
+  const site = siteFor(location);
+  const reviews = site.extractAllReviews(root);
   if (!reviews.length) return;
-  const sortedByNewest = isSortedByNewest(root);
-  const signature = `${sortedByNewest}\n` + reviews.map((r) => `${r.reviewerName}|${r.rating}|${r.hasOwnerReply}`).join("\n");
+  const sortedByNewest = site.isSortedByNewest(root);
+  const page = site.pageInfo?.(root);
+  const signature =
+    `${sortedByNewest}|${page?.first}\n` +
+    reviews.map((r) => `${r.reviewerName}|${r.rating}|${r.hasOwnerReply}|${r.textIsShort}`).join("\n");
   if (signature === lastSent) return;
   lastSent = signature;
   const where = `${location.host}${location.pathname}`;
   if (sortedByNewest === undefined) {
-    console.info(`[ReviewReply] Not saving ${reviews.length} reviews: no Google sort button here (${where})`);
+    console.info(`[ReviewReply] Not saving ${reviews.length} reviews: no sort order on this page (${where})`);
     return;
   }
-  console.info(`[ReviewReply] Saving ${reviews.length} reviews · sorted by Newest: ${sortedByNewest} · ${where}`);
-  const msg: Message = { type: "archiveReviews", reviews, sortedByNewest };
+  console.info(`[ReviewReply] Saving ${reviews.length} ${site.source} reviews · sorted newest first: ${sortedByNewest} · ${where}`);
+  const msg: Message = { type: "archiveReviews", source: site.source, reviews, sortedByNewest, page };
   chrome.runtime.sendMessage(msg).catch(() => {});
 }
 

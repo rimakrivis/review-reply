@@ -72,11 +72,11 @@
 
     <section id="panel-reports" class="stack" role="tabpanel" aria-labelledby="tab-reports" hidden>
       <section id="reports-card" class="card">
-        <h2>Monthly reports</h2>
+        <h2>Reports</h2>
         <p id="reports-empty" class="muted small" hidden></p>
         <div id="reports-controls">
           <div class="row" style="margin-top:10px">
-            <select id="report-month" class="grow" aria-label="Month"></select>
+            <select id="report-month" class="grow" aria-label="Report"></select>
             <button id="make-report" type="button" class="primary">Make report</button>
           </div>
           <div class="row" style="margin-top:8px">
@@ -84,6 +84,7 @@
             <button id="save-pdf" type="button" hidden>Save as PDF</button>
           </div>
         </div>
+        <div id="report-sites" class="notice warn small" hidden></div>
         <div id="report-status" class="notice small" aria-live="polite" hidden></div>
       </section>
 
@@ -93,12 +94,10 @@
         <h2>Review history</h2>
         <p class="small">Collecting for: <b id="history-business"></b></p>
         <p id="history-count" class="small"></p>
-        <p id="history-updated" class="muted small"></p>
+        <ul id="history-sites" class="small sites"></ul>
         <p id="history-complete" class="small"></p>
-        <div id="history-sort-warning" class="notice warn small" hidden>
-          Google's review list is not sorted by <b>Newest</b>. Switch the sort to <b>Newest</b> so ReviewReply can tell which months are complete.
-        </div>
-        <p class="muted small">Tip: open your Google reviews, sort by <b>Newest</b>, and scroll down to collect older months. Reports can only be made for complete months.</p>
+        <div id="history-sort-warning" class="notice warn small" hidden></div>
+        <p class="muted small">Tip: open your reviews sorted by newest and go back to collect older months: on Google sort by <b>Newest</b> and scroll down; on Tripadvisor sort by <b>Most recent</b> and click through the pages in order, starting at page 1. Reports can only be made for months that are complete on every site.</p>
         <p class="small"><button id="clear-history" type="button" class="danger" hidden>Clear review history</button></p>
       </section>
     </section>

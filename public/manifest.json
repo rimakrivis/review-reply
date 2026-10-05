@@ -20,7 +20,14 @@
         "https://www.google.lt/*",
         "https://www.google.co.uk/*",
         "https://www.google.ie/*",
-        "https://www.google.de/*"
+        "https://www.google.de/*",
+        "https://www.tripadvisor.com/*",
+        "https://www.tripadvisor.nl/*",
+        "https://www.tripadvisor.co.uk/*",
+        "https://www.tripadvisor.ie/*",
+        "https://www.tripadvisor.de/*",
+        "https://www.facebook.com/*",
+        "https://web.facebook.com/*"
       ],
       "js": ["content.js"],
       "all_frames": true,

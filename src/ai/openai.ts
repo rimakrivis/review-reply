@@ -1,6 +1,7 @@
 import { DRAFT_SCHEMA, parseDraft, type Prompt } from "../prompt";
 import { MONTH_SCHEMA, parseMonthReport } from "../report-prompt";
-import type { DraftResult, MonthReport, StoredReview } from "../types";
+import type { DraftResult, MonthEntry, MonthReport, StoredReview, YearReport } from "../types";
+import { parseYearReport, YEAR_SCHEMA } from "../year-report";
 import { ProviderError, type AIProvider } from "./provider";
 
 const URL = "https://api.openai.com/v1/chat/completions";
@@ -34,6 +35,14 @@ export const DRAFT_SPEC: RequestSpec = {
 export const MONTH_SPEC: RequestSpec = {
   name: "month_report",
   schema: MONTH_SCHEMA,
+  maxTokens: 4000,
+  reasoningMaxTokens: 10000,
+  temperature: 0.3,
+};
+
+export const YEAR_SPEC: RequestSpec = {
+  name: "year_report",
+  schema: YEAR_SCHEMA,
   maxTokens: 4000,
   reasoningMaxTokens: 10000,
   temperature: 0.3,
@@ -92,6 +101,11 @@ export class OpenAIProvider implements AIProvider {
   /** `listed` are the reviews in the prompt, in the same order, so review numbers can be turned into names. */
   async summarizeMonth(prompt: Prompt, listed: StoredReview[]): Promise<MonthReport> {
     return parseMonthReport(await this.complete(prompt, MONTH_SPEC), listed);
+  }
+
+  /** `entries` are the year's monthly entries, in the same order as in the prompt. */
+  async summarizeYear(prompt: Prompt, entries: MonthEntry[]): Promise<YearReport> {
+    return parseYearReport(await this.complete(prompt, YEAR_SPEC), entries);
   }
 
   /** Sends one request and returns the model's raw JSON text, or throws a ProviderError worth showing. */

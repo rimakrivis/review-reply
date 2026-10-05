@@ -1,4 +1,4 @@
-import type { Profile, Situation, UrgentTopic } from "./types";
+import { SOURCE_NAMES, type Profile, type Situation, type Source, type UrgentTopic } from "./types";
 import { TEMPLATES } from "./templates";
 
 export function newId(): string {
@@ -8,7 +8,7 @@ export function newId(): string {
 export function profileFromTemplate(key: string, businessName = ""): Profile {
   const t = TEMPLATES.find((x) => x.key === key) ?? TEMPLATES[TEMPLATES.length - 1];
   const p = structuredClone(t.profile);
-  return { ...p, id: newId(), businessName };
+  return { ...p, id: newId(), businessName, skippedSources: [] };
 }
 
 export function emptySituation(): Situation {
@@ -27,6 +27,7 @@ export function normalizeProfile(p: Profile): Profile {
     ...p,
     urgentTopics: Array.isArray(p.urgentTopics) ? p.urgentTopics : [],
     reportLanguage: p.reportLanguage || DEFAULT_REPORT_LANGUAGE,
+    skippedSources: Array.isArray(p.skippedSources) ? p.skippedSources : [],
   };
 }
 
@@ -91,6 +92,9 @@ export function parseProfileJson(json: string): Profile {
     situations,
     urgentTopics,
     reportLanguage: str(d.reportLanguage, "reportLanguage") || DEFAULT_REPORT_LANGUAGE,
+    skippedSources: Array.isArray(d.skippedSources)
+      ? d.skippedSources.filter((x): x is Source => typeof x === "string" && x in SOURCE_NAMES)
+      : [],
   };
 }
 

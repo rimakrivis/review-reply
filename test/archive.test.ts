@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   addRange,
+  type CollectInfo,
   compareStats,
   completeMonths,
+  coverageOf,
   coverageStart,
+  followPages,
+  intersectRanges,
+  monthSites,
+  readyMonths,
+  sitesInUse,
   isMonthComplete,
   isSameReview,
   mergeReviews,
@@ -12,7 +19,10 @@ import {
   previousMonth,
   reportMonths,
   reviewsInMonth,
+  statsBySource,
   statsFor,
+  sumBySource,
+  updateSiteCollect,
 } from "../src/archive";
 import type { MonthEntry, Review, StoredReview } from "../src/types";
 
@@ -139,9 +149,93 @@ describe("monthly report helpers", () => {
     expect(reviewsInMonth(stored, "2026-08").map((r) => r.reviewerName)).toEqual(["R1", "R2"]);
   });
   it("lists complete months and months with a report, newest first", () => {
-    expect(reportMonths(ranges, { "2026-02": entry("2026-02") }, NOW)).toEqual(["2026-08", "2026-07", "2026-06", "2026-02"]);
+    expect(reportMonths(completeMonths(ranges, NOW), { "2026-02": entry("2026-02") })).toEqual(["2026-08", "2026-07", "2026-06", "2026-02"]);
   });
   it("lists complete months still missing a report, oldest first", () => {
     expect(missingMonths(ranges, { "2026-07": entry("2026-07") }, NOW)).toEqual(["2026-06", "2026-08"]);
+  });
+});
+
+describe("several review sites", () => {
+  const ta = (name: string, rating: number, daysAgo: number, extra: Partial<Review> = {}) =>
+    review(name, rating, daysAgo, { source: "tripadvisor", ...extra });
+
+  it("never mixes up reviews from different sites", () => {
+    expect(isSameReview(review("Anna", 5, 3), ta("Anna", 5, 3))).toBe(false);
+    const { merged } = mergeReviews([], [review("Anna", 5, 3), ta("Anna", 5, 3)], NOW);
+    expect(merged.map((r) => r.source)).toEqual(["google", "tripadvisor"]);
+  });
+
+  it("replaces a shortened text with the full text, never the other way round", () => {
+    const short = ta("Ben", 1, 5, { text: "Short changed...\nHad been going", textIsShort: true });
+    const full = ta("Ben", 1, 5, { text: "Short changed\nHad been going for years.", googleId: "taur:1" });
+    const once = mergeReviews([], [short], NOW).merged;
+    const twice = mergeReviews(once, [full], NOW).merged;
+    expect(twice).toHaveLength(1);
+    expect(twice[0]).toMatchObject({ text: full.text, googleId: "taur:1" });
+    expect(twice[0].textIsShort).toBeUndefined();
+    expect(mergeReviews(twice, [short], NOW).merged[0].text).toBe(full.text);
+  });
+
+  it("counts stars per site and adds them up across months", () => {
+    const by = statsBySource([review("A", 5, 1), ta("B", 3, 1), ta("C", 1, 1)]);
+    expect(by.google?.count).toBe(1);
+    expect(by.tripadvisor).toMatchObject({ count: 2, average: 2 });
+    expect(sumBySource([by, { google: statsFor([{ rating: 1 }]) }]).google).toMatchObject({ count: 2, average: 3 });
+  });
+
+  it("follows numbered pages read in order from page 1", () => {
+    const d = (y: number, m: number, day: number) => new Date(y, m - 1, day).getTime();
+    const p1 = followPages(undefined, { first: 1, last: 30, total: 75 }, d(2026, 3, 10), NOW);
+    expect(p1.range).toEqual([d(2026, 3, 11), NOW]); // reviews of the 10th may continue on page 2
+    const p3 = followPages(p1.chain, { first: 61, last: 75, total: 75 }, d(2025, 1, 5), NOW + DAY);
+    expect(p3.range).toBeUndefined(); // page 2 was skipped
+    const p2 = followPages(p1.chain, { first: 31, last: 60, total: 75 }, d(2025, 6, 2), NOW + DAY);
+    expect(p2.range).toEqual([d(2025, 6, 3), NOW]); // still only as new as when page 1 was read
+    const last = followPages(p2.chain, { first: 61, last: 75, total: 75 }, d(2025, 1, 5), NOW + DAY);
+    expect(last.range).toEqual([d(2025, 1, 1), NOW]); // the last page: its oldest month is complete
+  });
+
+  it("counts a month complete only when every site in use covers it", () => {
+    const d = (m: number, day: number) => new Date(2026, m - 1, day).getTime();
+    const google = updateSiteCollect(undefined, [review("A", 5, 200)], { source: "google", sortedByNewest: true }, NOW);
+    const info: CollectInfo = { ...google };
+    const googleOnly = completeMonths(coverageOf(info), NOW);
+    expect(googleOnly).toContain("2026-05");
+    const ta = updateSiteCollect(undefined, [review("B", 4, 0, { date: d(6, 15) })], {
+      source: "tripadvisor",
+      sortedByNewest: true,
+      page: { first: 1, last: 30, total: 90 },
+    }, NOW);
+    const both: CollectInfo = { ...info, sites: { tripadvisor: ta } };
+    expect(completeMonths(coverageOf(both), NOW)).toEqual(["2026-07", "2026-08"]);
+    expect(intersectRanges([[0, 10]], [[5, 20], [30, 40]])).toEqual([[5, 10]]);
+  });
+
+  it("ignores a page whose sort order could not be trusted", () => {
+    const site = updateSiteCollect(undefined, [review("A", 5, 30)], { source: "tripadvisor", sortedByNewest: false, page: { first: 1, last: 30, total: 90 } }, NOW);
+    expect(site).toEqual({ lastCollectedAt: NOW, lastSortedByNewest: false });
+  });
+
+  it("uses only the sites a business opened, and lets the owner leave one out", () => {
+    const d = (m: number, day: number) => new Date(2026, m - 1, day).getTime();
+    const google = updateSiteCollect(undefined, [review("A", 5, 200)], { source: "google", sortedByNewest: true }, NOW);
+    const ta = updateSiteCollect(undefined, [review("B", 4, 0, { date: d(6, 15) })], {
+      source: "tripadvisor",
+      sortedByNewest: true,
+      page: { first: 1, last: 30, total: 90 },
+    }, NOW);
+    const onlyGoogle: CollectInfo = { ...google };
+    expect(sitesInUse(onlyGoogle)).toEqual(["google"]);
+    expect(monthSites(onlyGoogle, "2026-05", NOW)).toEqual({ ready: ["google"], waiting: [] });
+
+    const both: CollectInfo = { ...google, sites: { tripadvisor: ta } };
+    expect(monthSites(both, "2026-05", NOW)).toEqual({ ready: ["google"], waiting: ["tripadvisor"] });
+    expect(monthSites(both, "2026-07", NOW)).toEqual({ ready: ["google", "tripadvisor"], waiting: [] });
+    expect(monthSites(both, "2026-05", NOW, ["tripadvisor"])).toEqual({ ready: ["google"], waiting: [] });
+    // May can still be picked (complete on Google); "Make missing reports" only takes months complete everywhere.
+    expect(readyMonths(both, NOW)).toContain("2026-05");
+    expect(completeMonths(coverageOf(both), NOW)).toEqual(["2026-07", "2026-08"]);
+    expect(completeMonths(coverageOf(both, ["tripadvisor"]), NOW)).toContain("2026-05");
   });
 });

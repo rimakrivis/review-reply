@@ -78,11 +78,12 @@ Since old raw reviews are deleted, real use stays much lower.
   (the API key only if the owner chooses to include it), review history and reports. Import asks before replacing
   anything.
 
-#### Step 2.4: Yearly report, charts and PDF
-- The yearly report is built from the monthly reports, and compared with the previous year when it exists.
-- Charts in the full view: average rating per month, reviews per month, and this month's stars against last
-  month's.
-- ~~Save as PDF~~: already done in 0.3.0 for monthly reports; the yearly report gets it too.
+#### Step 2.4: Yearly report, charts and PDF ✅ unreleased
+- The yearly report is built from the monthly reports, and compared with the previous year when it exists. Missing
+  monthly reports are made first. An unfinished year gets a report of the months so far.
+- Charts in the yearly report: reviews per month and average stars per month, as two separate charts. This month's
+  stars against last month's are already shown in each monthly report.
+- Save as PDF works for the yearly report too.
 
 #### Step 2.5: Automatic routine
 - Each day, the extension checks whether a month has ended.
@@ -102,6 +103,15 @@ Since old raw reviews are deleted, real use stays much lower.
   unanswered, then report ready. Hovering over the icon lists all three.
 - **Urgent between reports:** new reviews from the last 14 days are checked against the urgent topics in one small,
   cheap AI request, so 🚨 updates right away instead of once a month.
+
+---
+
+## More review sites
+
+- ✅ Tripadvisor (owner pages, English). Unreleased.
+- ✅ Facebook (page Reviews tab, English and Lithuanian). Unreleased.
+- Later, when a client needs it: TheFork. Replying needs the restaurant's TheFork Manager login; ask the owner for
+  one login or a saved page to build the reader against. Scores out of 10 become 1–5 stars.
 
 ---
 

@@ -4,6 +4,33 @@ All notable changes to ReviewReply are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Yearly report.** Pick a year at the top of the report list in the **📊 Reports** tab. It is built from that
+  year's monthly reports, not from the raw reviews, so it stays small and cheap. Any missing monthly reports are made
+  first. It works for an unfinished year too, and shows which months it covers.
+  - Exact totals for the year, compared with last year when there is a report for it.
+  - Two charts: reviews per month and average stars per month.
+  - Every 🚨 urgent item of the year, with its month.
+  - AI summary: overview, 👍 praise and 👎 complaint themes across the year (with how many reviews and months mention
+    each, counted by code), changes during the year and suggestions.
+  - A note when a monthly report was made again after the yearly one, so it can be updated.
+  - **Save as PDF**, like the monthly report.
+- Backups include yearly reports.
+- **Tripadvisor.** The ✨ Draft reply bar, the floating ✨ button and review history work on Tripadvisor's owner
+  review pages too. Shortened texts in the list are replaced by the full text once the review is opened. Pages
+  opened in order from page 1, sorted by **Most recent** without filters, mark months as complete.
+- **Facebook.** The ✨ Draft reply bar works in the comment box under each review, and the page's **Reviews** tab is
+  collected for the review history (Facebook in English or Lithuanian). Facebook has no stars: reports count who
+  recommends and show the share as its own tile.
+- **Several review sites per business.** Each business uses only the sites whose reviews were opened for it: Google,
+  Tripadvisor, Facebook or any mix. Each saved review remembers its site. The Review history card shows each site, and reports
+  show the numbers per site.
+- **Waiting for a site.** When a month is complete on one site but not yet on another, the Reports tab says which
+  site to open. The owner can also **Make without** that site for one report, or **Always leave it out** for the
+  business (and **Use again** later). Reports say which sites they were made without.
+
 ## [0.3.0] - 2026-09-30
 
 ### Added

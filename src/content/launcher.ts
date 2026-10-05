@@ -2,9 +2,10 @@ import { LAUNCHER_POS_KEY, loadSettings, onSettingsChanged, saveSettings } from 
 import type { Message } from "../types";
 import { extensionAlive } from "./alive";
 import { findReviewContainer, UI_ATTR } from "./extract";
+import { siteFor } from "./sites";
 
 /**
- * The floating ✨ button on Google review pages. Clicking it opens a small menu that opens the side panel or the
+ * The floating ✨ button on review pages (Google, Tripadvisor, …). Clicking it opens a small menu that opens the side panel or the
  * full view. It lives in a Shadow DOM, like the draft bar, so Google's CSS and ours never clash.
  */
 
@@ -66,10 +67,13 @@ function isTopFrame(): boolean {
 }
 
 /**
- * True when the page shows reviews the owner can reply to: Google's business pages, a draft bar we already
- * added, or a "Reply" button inside a single review. A normal Google search has none of these.
+ * True when the page shows reviews the owner can reply to. Other sites decide for themselves (see sites.ts); on
+ * Google: its business pages, a draft bar we already added, or a "Reply" button inside a single review.
+ * A normal Google search has none of these.
  */
 export function hasOwnerReviews(doc: Document = document): boolean {
+  const site = siteFor(doc.location);
+  if (site.hasOwnerReviews) return site.hasOwnerReviews(doc);
   if (doc.location.hostname === "business.google.com") return true;
   if (doc.querySelector(`[${UI_ATTR}]:not([${LAUNCHER_ATTR}])`)) return true;
   return Array.from(doc.querySelectorAll("button, [role=button], a, [jsaction]")).some(

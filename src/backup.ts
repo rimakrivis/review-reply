@@ -1,6 +1,6 @@
 import { normalizeProfile } from "./profiles";
 import { withDefaults } from "./storage";
-import type { MonthEntry, Profile, Settings, StoredReview } from "./types";
+import type { MonthEntry, Profile, Settings, StoredReview, YearEntry } from "./types";
 
 /** One file with everything ReviewReply keeps in this browser: settings, profiles, reviews and reports. */
 export interface Backup {
@@ -103,18 +103,23 @@ export function restoreChanges(
   return { set: { settings, ...backup.data }, remove };
 }
 
-/** Short description for the confirm dialog, like "2 businesses, 102 reviews, 3 monthly reports". */
+/** Short description for the confirm dialog, like "2 businesses, 102 reviews, 3 monthly reports, 1 yearly report". */
 export function describeBackup(backup: Backup): string {
   let reviews = 0;
   let reports = 0;
+  let yearly = 0;
   for (const [key, value] of Object.entries(backup.data)) {
     if (key.startsWith("reviews:")) reviews += (value as StoredReview[]).length;
     if (key.startsWith("months:")) {
       reports += Object.values(value as Record<string, MonthEntry>).filter((m) => m.report).length;
     }
+    if (key.startsWith("years:")) {
+      yearly += Object.values(value as Record<string, YearEntry>).filter((y) => y.report).length;
+    }
   }
   const n = backup.settings.profiles.length;
-  return `${n} ${n === 1 ? "business" : "businesses"}, ${reviews} reviews, ${reports} monthly reports`;
+  const years = yearly ? `, ${yearly} yearly report${yearly === 1 ? "" : "s"}` : "";
+  return `${n} ${n === 1 ? "business" : "businesses"}, ${reviews} reviews, ${reports} monthly reports${years}`;
 }
 
 /* ---------- chrome.storage ---------- */

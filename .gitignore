@@ -4,3 +4,6 @@ dist/
 .DS_Store
 eval-results.md
 review-sample*.html
+*.mhtml
+/*.html
+/*_files/
