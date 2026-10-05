@@ -13,21 +13,32 @@ import { initLauncher, refreshLauncher } from "./launcher";
 const DONE_ATTR = "data-review-reply-done";
 const EDITOR_SELECTOR = 'textarea, [contenteditable="true"], [contenteditable=""], [role="textbox"]';
 
+const SPARKLE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.6 5.6 1.9-5.6 1.9L12 18l-1.9-5.6-5.6-1.9 5.6-1.9z"/><path d="M19 3v4M17 5h4"/></svg>`;
+
 const STYLE = `
-  :host { all: initial; display: block; margin: 6px 0; font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-  button { font: inherit; border: 1px solid #c7d2fe; background: #eef2ff; color: #3730a3; border-radius: 999px;
-           padding: 4px 12px; cursor: pointer; }
-  button:hover { background: #e0e7ff; }
-  button:disabled { opacity: .6; cursor: progress; }
-  button.primary { background: #4f46e5; border-color: #4f46e5; color: #fff; font-weight: 600; }
-  button.primary:hover { background: #4338ca; }
-  .info { color: #475569; font-size: 12px; }
-  .error { color: #b91c1c; font-size: 12px; }
-  a { color: inherit; }
+  :host { all: initial; display: block; margin: 8px 0; font: 13px/1.4 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+          --surface: #fff; --border: #e7e8eb; --strong: #d9dbe0; --text: #1c1d1f; --muted: #75777c; --hover: #f2f3f5;
+          --accent: #2668f0; --accent-hover: #1f58cf; --ai: #7c5cfc; --danger: #d6342c; }
+  .bar { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px; max-width: 100%; background: var(--surface);
+         border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 2px rgb(16 24 40 / .05); }
+  button { font: inherit; font-weight: 500; border: 1px solid var(--strong); background: var(--surface); color: var(--text);
+           border-radius: 7px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  button:hover { background: var(--hover); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: .55; cursor: progress; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: var(--accent-hover); }
+  svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .more { display: inline-flex; gap: 6px; }
+  .more[hidden] { display: none; }
+  .status { padding: 0 4px; }
+  .info { color: var(--muted); font-size: 12px; }
+  .info.busy { color: var(--ai); }
+  .error { color: var(--danger); font-size: 12px; }
+  a { color: var(--accent); }
   @media (prefers-color-scheme: dark) {
-    button { background: #1e1b4b; border-color: #3730a3; color: #c7d2fe; }
-    .info { color: #94a3b8; } .error { color: #fca5a5; }
+    :host { --surface: #1a1b1e; --border: #2c2e33; --strong: #3a3c42; --text: #ececee; --muted: #9a9ca3; --hover: #26272b;
+            --accent: #4d86ff; --accent-hover: #6b9bff; --ai: #a48bff; --danger: #ff7b72; }
   }
 `;
 
@@ -70,7 +81,7 @@ function attach(editor: HTMLElement, container: Element): void {
   const root = host.attachShadow({ mode: "open" });
   root.innerHTML = `<style>${STYLE}</style>
     <div class="bar">
-      <button class="primary" data-v="default">✨ Draft reply</button>
+      <button class="primary" data-v="default">${SPARKLE}Draft reply</button>
       <span class="more" hidden>
         <button data-v="shorter">Shorter</button>
         <button data-v="warmer">Warmer</button>
@@ -84,7 +95,7 @@ function attach(editor: HTMLElement, container: Element): void {
   const more = root.querySelector(".more") as HTMLElement;
   const status = root.querySelector(".status") as HTMLElement;
 
-  const show = (cls: "info" | "error", text: string, settingsLink = false) => {
+  const show = (cls: "info" | "info busy" | "error", text: string, settingsLink = false) => {
     status.className = `status ${cls}`;
     status.textContent = text + (settingsLink ? " " : "");
     if (settingsLink) {
@@ -106,7 +117,7 @@ function attach(editor: HTMLElement, container: Element): void {
       return;
     }
     buttons.forEach((b) => (b.disabled = true));
-    show("info", "Drafting…");
+    show("info busy", "Drafting…");
     try {
       const res = await send({
         type: "draft",

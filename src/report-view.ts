@@ -74,7 +74,7 @@ function numbers(stats: Stats, previous?: Stats): HTMLElement[] {
   if (stats.recommend) {
     const share = recommendShare(stats.recommend);
     const before = previous?.recommend && recommendShare(previous.recommend);
-    tiles.append(tile("Recommend (Facebook)", `${share} %`, before !== undefined ? change(share - before) : undefined));
+    tiles.append(tile("Recommend", `${share} %`, before !== undefined ? change(share - before) : undefined));
   }
   const most = Math.max(1, ...stats.stars);
   const starBox = el("div", "stars");

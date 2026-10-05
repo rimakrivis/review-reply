@@ -9,8 +9,9 @@
 </head>
 <body>
   <main>
-    <header class="row">
-      <h1 class="grow">✨ ReviewReply settings</h1>
+    <header class="row topbar">
+      <span class="logo"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l1.9 5.6 5.6 1.9-5.6 1.9L12 18l-1.9-5.6-5.6-1.9 5.6-1.9z"/><path d="M19 3v4M17 5h4"/></svg></span>
+      <h1 class="grow">ReviewReply settings</h1>
       <span id="saved" class="muted" aria-live="polite"></span>
     </header>
 
@@ -35,7 +36,7 @@
 
     <section class="card">
       <h2>2. Business profiles</h2>
-      <p class="muted small">One profile per business. The side panel and the Google page use the active one.</p>
+      <p class="muted small">One profile per business. The side panel and the review pages use the active one.</p>
       <div class="row">
         <select id="profile" class="grow" aria-label="Profile"></select>
         <button id="duplicate" type="button">Duplicate</button>
@@ -100,8 +101,8 @@
     </section>
 
     <section class="card">
-      <h2>6. On Google pages</h2>
-      <label class="check"><input id="show-launcher" type="checkbox" /> Show the ✨ button on Google review pages</label>
+      <h2>6. On review pages</h2>
+      <label class="check"><input id="show-launcher" type="checkbox" /> Show the ✨ button on review pages (Google, Tripadvisor, Facebook)</label>
       <p class="muted small">It floats in a corner and opens the side panel or the full view. Drag it to move it.</p>
     </section>
 

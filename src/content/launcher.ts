@@ -22,27 +22,38 @@ interface Pos {
   bottom: number;
 }
 
+const ICON = (d: string) =>
+  `<svg viewBox="0 0 24 24" aria-hidden="true">${d.split("|").map((p) => `<path d="${p}"/>`).join("")}</svg>`;
+const SPARKLE = ICON("M12 3l1.9 5.6 5.6 1.9-5.6 1.9L12 18l-1.9-5.6-5.6-1.9 5.6-1.9z|M19 3v4M17 5h4");
+
 const STYLE = `
-  :host { all: initial; font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  .fab { width: ${SIZE}px; height: ${SIZE}px; border-radius: 50%; border: none; cursor: grab; font-size: 22px;
-         background: #4f46e5; color: #fff; box-shadow: 0 4px 14px rgb(0 0 0 / .25); touch-action: none; }
-  .fab:hover { background: #4338ca; }
-  .fab:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+  :host { all: initial; font: 13px/1.4 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .fab { width: ${SIZE}px; height: ${SIZE}px; border-radius: 14px; border: none; cursor: grab; display: grid; place-items: center;
+         background: #1c1d1f; color: #fff; box-shadow: 0 6px 20px rgb(16 24 40 / .22), 0 0 0 1px rgb(255 255 255 / .06) inset; touch-action: none; }
+  .fab svg { width: 22px; height: 22px; }
+  .fab:hover { background: #2b2c30; }
+  .fab:focus-visible { outline: 3px solid #9bbcff; outline-offset: 2px; }
   .fab.dragging { cursor: grabbing; }
-  .menu { position: absolute; right: 0; bottom: ${SIZE + 8}px; min-width: 190px; padding: 6px; border-radius: 12px;
-          background: #fff; color: #0f172a; border: 1px solid #e2e8f0; box-shadow: 0 8px 24px rgb(0 0 0 / .18);
-          display: flex; flex-direction: column; gap: 2px; }
+  .menu { position: absolute; right: 0; bottom: ${SIZE + 8}px; min-width: 200px; padding: 4px; border-radius: 12px;
+          background: #fff; color: #1c1d1f; border: 1px solid #e7e8eb; box-shadow: 0 12px 32px rgb(16 24 40 / .16);
+          display: flex; flex-direction: column; gap: 1px; }
   .menu[hidden] { display: none; }
   .menu.down { bottom: auto; top: ${SIZE + 8}px; }
   .menu.left { right: auto; left: 0; }
-  .menu button { font: inherit; text-align: left; border: none; background: none; color: inherit;
-                 padding: 8px 10px; border-radius: 8px; cursor: pointer; }
-  .menu button:hover, .menu button:focus-visible { background: #eef2ff; outline: none; }
-  .menu .muted { color: #64748b; }
+  .menu button { font: inherit; text-align: left; border: none; background: none; color: inherit; display: flex; align-items: center; gap: 10px;
+                 padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+  .menu button svg { color: #75777c; }
+  .menu button:hover, .menu button:focus-visible { background: #f2f3f5; outline: none; }
+  .menu .muted { color: #75777c; }
+  .menu hr { border: none; border-top: 1px solid #e7e8eb; margin: 3px 4px; }
   @media (prefers-color-scheme: dark) {
-    .menu { background: #111827; color: #e5e7eb; border-color: #1f2937; }
-    .menu button:hover, .menu button:focus-visible { background: #1e1b4b; }
-    .menu .muted { color: #94a3b8; }
+    .fab { background: #ececee; color: #1c1d1f; }
+    .fab:hover { background: #ffffff; }
+    .menu { background: #1a1b1e; color: #ececee; border-color: #2c2e33; }
+    .menu button:hover, .menu button:focus-visible { background: #26272b; }
+    .menu .muted, .menu button svg { color: #9a9ca3; }
+    .menu hr { border-top-color: #2c2e33; }
   }
 `;
 
@@ -102,11 +113,12 @@ function mount(doc: Document): void {
   const root = host.attachShadow({ mode: "open" });
   root.innerHTML = `<style>${STYLE}</style>
     <div class="menu" role="menu" hidden>
-      <button role="menuitem" data-action="panel">🗂️ Open side panel</button>
-      <button role="menuitem" data-action="full">⤢ Open full view</button>
-      <button role="menuitem" data-action="hide" class="muted">Hide this button</button>
+      <button role="menuitem" data-action="panel">${ICON("M4 4h16v16H4z|M15 4v16")}Open side panel</button>
+      <button role="menuitem" data-action="full">${ICON("M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7")}Open full view</button>
+      <hr />
+      <button role="menuitem" data-action="hide" class="muted">${ICON("M3 3l18 18|M10.6 10.6a2 2 0 0 0 2.8 2.8|M9.9 5.1A9.8 9.8 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-2.4 3.3M6.6 6.6C3.9 8.4 2.5 12 2.5 12s3.5 7 9.5 7a9.6 9.6 0 0 0 5.4-1.6")}Hide this button</button>
     </div>
-    <button class="fab" aria-label="ReviewReply menu" aria-haspopup="menu" aria-expanded="false" title="ReviewReply (drag to move)">✨</button>`;
+    <button class="fab" aria-label="ReviewReply menu" aria-haspopup="menu" aria-expanded="false" title="ReviewReply (drag to move)">${SPARKLE}</button>`;
   (doc.body ?? doc.documentElement).append(host);
 
   const el = host;

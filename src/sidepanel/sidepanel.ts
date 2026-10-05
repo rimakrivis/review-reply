@@ -6,6 +6,7 @@ import {
   coverageOf,
   isYearOutdated,
   loadCollectInfo,
+  monthKey,
   loadMonths,
   loadReviews,
   loadYears,
@@ -435,30 +436,46 @@ async function renderHistory() {
   const sources = SOURCES.filter(
     (src) => collectedSources(info).includes(src) || reviews.some((r) => sourceOf(r) === src),
   );
+  const make = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text = "") => {
+    const node = document.createElement(tag);
+    node.className = className;
+    if (text) node.textContent = text;
+    return node;
+  };
   $("#history-sites").replaceChildren(
     ...sources.map((src) => {
       const own = reviews.filter((r) => sourceOf(r) === src); // saved newest first
       const site = siteCollect(info, src);
       const complete = completeMonths(site?.coverage ?? [], now);
-      const li = document.createElement("li");
-      const parts = [
+      const skipped = (profile.skippedSources ?? []).includes(src);
+      const sub = [
         `${own.length} review${own.length === 1 ? "" : "s"}`,
         own.length ? `${monthLabel(own[own.length - 1].date)} – ${monthLabel(own[0].date)}` : "",
-        site ? `last collected ${daysAgoLabel(site.lastCollectedAt)}` : "",
-        complete.length ? `complete: ${monthSpan(complete)}` : "no complete months yet",
-      ].filter(Boolean);
-      const skipped = (profile.skippedSources ?? []).includes(src);
-      if (skipped) parts.push("left out of reports");
-      const b = document.createElement("b");
-      b.textContent = `${SOURCE_NAMES[src]}: `;
-      li.append(b, parts.join(" · "));
+        site ? `collected ${daysAgoLabel(site.lastCollectedAt)}` : "",
+        complete.length ? `complete ${monthSpan(complete)}` : "",
+      ].filter(Boolean).join(" · ");
+      const lastMonth = previousMonth(monthKey(now));
+
+      const li = make("li", "list-item");
+      const icon = make("span", `site-icon ${src}`, SOURCE_NAMES[src][0]);
+      icon.setAttribute("aria-hidden", "true");
+      const body = make("div", "body");
+      body.append(make("div", "title", SOURCE_NAMES[src]), make("div", "sub", sub));
+      li.append(icon, body);
       if (skipped) {
-        const again = document.createElement("button");
+        const right = make("div", "body-right");
+        const again = make("button", "link", "Use again");
         again.type = "button";
-        again.className = "link";
-        again.textContent = "Use again";
         again.onclick = () => setSkipped([src], false);
-        li.append(" ", again);
+        right.append(make("span", "status off", "Left out"), document.createElement("br"), again);
+        right.style.textAlign = "right";
+        li.append(right);
+      } else {
+        li.append(
+          complete.includes(lastMonth)
+            ? make("span", "status done", "Up to date")
+            : make("span", "status wait", "Needs a visit"),
+        );
       }
       return li;
     }),

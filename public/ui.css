@@ -1,45 +1,103 @@
+/* Shared look of the side panel, full view and settings: calm grays, one blue action color, purple for AI. */
 :root {
-  --bg: #f8fafc; --surface: #ffffff; --text: #0f172a; --muted: #64748b; --border: #e2e8f0;
-  --accent: #4f46e5; --accent-hover: #4338ca; --accent-soft: #eef2ff; --accent-text: #3730a3;
-  --danger: #b91c1c; --danger-soft: #fef2f2; --ok: #047857; --ok-soft: #ecfdf5; --warn-soft: #fffbeb; --warn: #92400e;
+  --bg: #f7f7f8; --surface: #ffffff; --surface-2: #fafafb; --field: #f2f3f5;
+  --text: #1c1d1f; --muted: #75777c; --border: #e7e8eb; --border-strong: #d9dbe0;
+  --accent: #2668f0; --accent-hover: #1f58cf; --accent-soft: #edf3ff; --accent-text: #1d4fc4; --accent-line: #c7d8fd;
+  --ai: #7c5cfc; --ai-soft: #f4f1ff; --ai-line: #ddd3ff;
+  --danger: #d6342c; --danger-soft: #fff1f0; --ok: #148a4a; --ok-soft: #eaf7ef; --warn: #9a5a06; --warn-soft: #fff8eb;
+  --shadow: 0 1px 2px rgb(16 24 40 / .05);
+  --radius: 12px; --radius-sm: 8px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0b1120; --surface: #111827; --text: #e5e7eb; --muted: #94a3b8; --border: #1f2937;
-    --accent: #6366f1; --accent-hover: #818cf8; --accent-soft: #1e1b4b; --accent-text: #c7d2fe;
-    --danger: #fca5a5; --danger-soft: #2a1215; --ok: #6ee7b7; --ok-soft: #052e1f; --warn-soft: #2a1f05; --warn: #fcd34d;
+    --bg: #111214; --surface: #1a1b1e; --surface-2: #1f2023; --field: #26272b;
+    --text: #ececee; --muted: #9a9ca3; --border: #2c2e33; --border-strong: #3a3c42;
+    --accent: #4d86ff; --accent-hover: #6b9bff; --accent-soft: #1a2747; --accent-text: #a9c4ff; --accent-line: #2e4577;
+    --ai: #a48bff; --ai-soft: #241d3d; --ai-line: #3d3266;
+    --danger: #ff7b72; --danger-soft: #3a1a1a; --ok: #4ccf86; --ok-soft: #10291b; --warn: #f0b450; --warn-soft: #33260d;
+    --shadow: none;
     color-scheme: dark;
   }
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-h1 { font-size: 18px; margin: 0; } h2 { font-size: 15px; margin: 0 0 8px; }
-a { color: var(--accent); }
-label { display: block; font-weight: 600; font-size: 12px; color: var(--muted); margin: 12px 0 4px; }
-label small { font-weight: 400; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 13.5px/1.5 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+h1 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+h2 { font-size: 14px; font-weight: 600; margin: 0 0 8px; letter-spacing: -.01em; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+label { display: block; font-weight: 500; font-size: 12px; color: var(--muted); margin: 14px 0 6px; }
+label small { font-weight: 400; opacity: .85; }
+
+/* Fields: filled gray, white with a blue ring while editing. */
 input, select, textarea {
-  width: 100%; font: inherit; color: var(--text); background: var(--surface);
-  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+  width: 100%; font: inherit; color: var(--text); background: var(--field);
+  border: 1px solid transparent; border-radius: var(--radius-sm); padding: 7px 10px;
+  transition: background .12s, border-color .12s, box-shadow .12s;
+}
+input::placeholder, textarea::placeholder { color: var(--muted); }
+input:hover, select:hover, textarea:hover { border-color: var(--border-strong); }
+input:focus, select:focus, textarea:focus {
+  outline: none; background: var(--surface); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
 }
 textarea { resize: vertical; min-height: 72px; }
-input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
-button {
-  font: inherit; border: 1px solid var(--border); background: var(--surface); color: var(--text);
-  border-radius: 8px; padding: 7px 12px; cursor: pointer;
+select {
+  cursor: pointer; appearance: none; -webkit-appearance: none; padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2375777c' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center; background-size: 14px;
 }
-button:hover { border-color: var(--accent); }
-button:disabled { opacity: .6; cursor: progress; }
-button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-button.primary:hover { background: var(--accent-hover); }
+
+/* Buttons: white with a thin border; one blue primary per screen. */
+button {
+  font: inherit; font-weight: 500; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text);
+  border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; box-shadow: var(--shadow);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background .12s, border-color .12s;
+}
+button:hover { background: var(--surface-2); border-color: var(--muted); }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: inset 0 1px 0 rgb(255 255 255 / .15), var(--shadow); }
+button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 button.danger { color: var(--danger); }
+button.ghost { border-color: transparent; background: none; box-shadow: none; color: var(--muted); }
+button.ghost:hover { background: var(--field); color: var(--text); }
+button.block { width: 100%; padding: 9px 12px; }
+.icon-btn { width: 30px; height: 30px; padding: 0; border: none; background: none; box-shadow: none; color: var(--muted); border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; }
+.icon-btn:hover { background: var(--field); color: var(--text); text-decoration: none; }
+svg.i { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .row > .grow { flex: 1 1 160px; }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+
+/* Cards, optionally with a header strip (like "✨ Record suggestion"). */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+.card-head {
+  display: flex; align-items: center; gap: 8px; margin: -14px -14px 14px; padding: 9px 14px;
+  background: var(--surface-2); border-bottom: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0;
+  color: var(--muted); font-size: 13px; font-weight: 500;
+}
+.card-head h2 { margin: 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+.card-head .grow { flex: 1; }
+.sparkle { color: var(--ai); }
+.section-title { font-size: 13px; font-weight: 500; color: var(--muted); margin: 6px 2px 0; }
+
 .muted { color: var(--muted); }
-.badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text); }
-.notice { border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.badge { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text); }
+.pill { display: inline-block; font-size: 12px; padding: 0 7px; border-radius: 6px; border: 1px solid var(--accent-line); color: var(--accent); background: var(--surface); }
+.pill.ai { border-color: var(--ai-line); color: var(--ai); background: var(--ai-soft); }
+.notice { border-radius: var(--radius-sm); padding: 9px 12px; font-size: 13px; border: 1px solid transparent; }
 .notice.error { background: var(--danger-soft); color: var(--danger); }
 .notice.ok { background: var(--ok-soft); color: var(--ok); }
 .notice.warn { background: var(--warn-soft); color: var(--warn); }
 [hidden] { display: none !important; }
+
+/* The brand mark: a dark rounded square with the sparkle. */
+.logo { width: 26px; height: 26px; border-radius: 7px; background: #1c1d1f; color: #fff; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.logo svg.i { width: 15px; height: 15px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo { background: #ececee; color: #1c1d1f; } }
+button.ghost.danger { color: var(--danger); }

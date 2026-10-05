@@ -9,27 +9,32 @@
 </head>
 <body>
   <main>
-    <header class="row">
-      <h1 class="grow">✨ ReviewReply</h1>
-      <button id="open-full" type="button" title="Open in a full browser tab">⤢ Full view</button>
-      <a href="#" data-open-settings>⚙️ Settings</a>
+    <header class="topbar">
+      <span class="logo" title="ReviewReply"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l1.9 5.6 5.6 1.9-5.6 1.9L12 18l-1.9-5.6-5.6-1.9 5.6-1.9z"/><path d="M19 3v4M17 5h4"/></svg></span>
+      <select id="profile" class="switcher" aria-label="Business"></select>
+      <span class="grow"></span>
+      <button id="open-full" type="button" class="icon-btn" title="Open in a full browser tab" aria-label="Full view">
+        <svg class="i" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      </button>
+      <a href="#" data-open-settings class="icon-btn" title="Settings" aria-label="Settings">
+        <svg class="i" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg>
+      </a>
     </header>
 
     <div id="left-tip" class="notice tip" hidden>
       <span class="grow">Want this panel on the left? In Chrome, open <b>Settings → Appearance → Side panel</b> and choose <b>Show on left</b>.</span>
-      <button id="dismiss-tip" type="button" class="icon" aria-label="Dismiss tip">✕</button>
+      <button id="dismiss-tip" type="button" class="icon-btn" aria-label="Dismiss tip"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
 
     <div id="setup" class="notice warn" hidden></div>
 
-    <div class="row business">
-      <label for="profile">Business</label>
-      <select id="profile" class="grow"></select>
-    </div>
-
     <nav class="tabs" role="tablist" aria-label="Sections">
-      <button type="button" role="tab" id="tab-profile" data-tab="profile" aria-controls="panel-profile">🏢 Profile</button>
-      <button type="button" role="tab" id="tab-reports" data-tab="reports" aria-controls="panel-reports">📊 Reports</button>
+      <button type="button" role="tab" id="tab-profile" data-tab="profile" aria-controls="panel-profile">
+        <svg class="i" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M3 21h18M8 7h4M8 11h4M8 15h4"/></svg>Profile
+      </button>
+      <button type="button" role="tab" id="tab-reports" data-tab="reports" aria-controls="panel-reports">
+        <svg class="i" viewBox="0 0 24 24"><path d="M3 21h18M7 17v-7M12 17V5M17 17v-4"/></svg>Reports
+      </button>
     </nav>
 
     <section id="panel-profile" class="stack" role="tabpanel" aria-labelledby="tab-profile">
@@ -38,9 +43,10 @@
       </div>
 
       <section id="profile-form" class="card">
-        <div class="row">
+        <div class="card-head">
+          <svg class="i" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M3 21h18M8 7h4M8 11h4M8 15h4"/></svg>
           <h2 class="grow">About the business</h2>
-          <span id="profile-saved" class="muted small" aria-live="polite"></span>
+          <span id="profile-saved" class="small" aria-live="polite"></span>
         </div>
         <div class="grid">
           <div><label for="p-businessName">Business name</label><input id="p-businessName" data-field="businessName" /></div>
@@ -66,22 +72,25 @@
           <option value="Russian"></option>
           <option value="Ukrainian"></option>
         </datalist>
-        <p class="small"><a href="#" data-open-settings>Edit rules, the situations playbook and urgent topics in full Settings →</a></p>
+        <p class="small foot-link"><a href="#" data-open-settings>Rules, situations playbook and urgent topics in Settings →</a></p>
       </section>
     </section>
 
     <section id="panel-reports" class="stack" role="tabpanel" aria-labelledby="tab-reports" hidden>
       <section id="reports-card" class="card">
-        <h2>Reports</h2>
+        <div class="card-head">
+          <svg class="i sparkle" viewBox="0 0 24 24"><path d="M12 3l1.9 5.6 5.6 1.9-5.6 1.9L12 18l-1.9-5.6-5.6-1.9 5.6-1.9z"/><path d="M19 3v4M17 5h4"/></svg>
+          <h2>Reports</h2>
+        </div>
         <p id="reports-empty" class="muted small" hidden></p>
-        <div id="reports-controls">
-          <div class="row" style="margin-top:10px">
-            <select id="report-month" class="grow" aria-label="Report"></select>
-            <button id="make-report" type="button" class="primary">Make report</button>
-          </div>
-          <div class="row" style="margin-top:8px">
-            <button id="make-missing" type="button">Make missing reports</button>
-            <button id="save-pdf" type="button" hidden>Save as PDF</button>
+        <div id="reports-controls" class="controls">
+          <select id="report-month" aria-label="Report"></select>
+          <button id="make-report" type="button" class="primary block">Make report</button>
+          <div class="row">
+            <button id="make-missing" type="button" class="grow">Make missing reports</button>
+            <button id="save-pdf" type="button" class="grow" hidden>
+              <svg class="i" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15l3 3 3-3"/></svg>Save as PDF
+            </button>
           </div>
         </div>
         <div id="report-sites" class="notice warn small" hidden></div>
@@ -90,15 +99,14 @@
 
       <article id="report" class="card report" hidden></article>
 
-      <section id="history" class="card" hidden>
-        <h2>Review history</h2>
-        <p class="small">Collecting for: <b id="history-business"></b></p>
-        <p id="history-count" class="small"></p>
-        <ul id="history-sites" class="small sites"></ul>
-        <p id="history-complete" class="small"></p>
+      <section id="history" class="stack" hidden>
+        <h3 class="section-title">Review sites · <span id="history-business"></span></h3>
+        <p id="history-count" class="muted small"></p>
+        <ul id="history-sites" class="list"></ul>
+        <p id="history-complete" class="small center"></p>
         <div id="history-sort-warning" class="notice warn small" hidden></div>
-        <p class="muted small">Tip: open your reviews sorted by newest and go back to collect older months: on Google sort by <b>Newest</b> and scroll down; on Tripadvisor sort by <b>Most recent</b> and click through the pages in order, starting at page 1. Reports can only be made for months that are complete on every site.</p>
-        <p class="small"><button id="clear-history" type="button" class="danger" hidden>Clear review history</button></p>
+        <p class="muted small">Open your reviews sorted by newest and go back to collect older months: on Google sort by <b>Newest</b> and scroll; on Tripadvisor sort by <b>Most recent</b> and open the pages in order from page 1; on Facebook open the page's <b>Reviews</b> tab and scroll. Reports are made for months that are complete on every site you use.</p>
+        <p><button id="clear-history" type="button" class="ghost danger small-btn" hidden>Clear review history</button></p>
       </section>
     </section>
   </main>
