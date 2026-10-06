@@ -7,7 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [Unreleased]
 
 ### Added
-- **Yearly report.** Pick a year at the top of the report list in the **📊 Reports** tab. It is built from that
+- **Yearly report.** Pick a year at the top of the report list in the **Reports** tab. It is built from that
   year's monthly reports, not from the raw reviews, so it stays small and cheap. Any missing monthly reports are made
   first. It works for an unfinished year too, and shows which months it covers.
   - Exact totals for the year, compared with last year when there is a report for it.
@@ -30,6 +30,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Waiting for a site.** When a month is complete on one site but not yet on another, the Reports tab says which
   site to open. The owner can also **Make without** that site for one report, or **Always leave it out** for the
   business (and **Use again** later). Reports say which sites they were made without.
+
+### Changed
+- **New design** for the side panel, full view, settings, the ✨ Draft reply bar and the floating ✨ button: calm
+  gray and white surfaces, filled fields, one blue main button, purple for AI. The business switcher moved into the
+  top bar, and Profile / Reports became a two-part switch.
+- **Business card in the side panel** shows a compact row with **Edit**. Changes are saved with **Save** (not while
+  typing); **Cancel** undoes them. Switching business with unsaved changes asks first.
 
 ## [0.3.0] - 2026-09-30
 
