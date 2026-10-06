@@ -23,7 +23,15 @@ body:not(.full) { background: var(--surface); }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
 @media (max-width: 360px) { .grid { grid-template-columns: 1fr; } }
 .grid label { margin-top: 0; }
-#profile-saved { color: var(--ok); }
+/* Business profile: a compact row with Edit, or the form with Save. */
+.profile-view { display: flex; align-items: center; gap: 12px; }
+.profile-view .body { flex: 1; min-width: 0; }
+.profile-view .title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-view .sub { font-size: 12px; color: var(--muted); }
+.site-icon.biz { background: var(--field); color: var(--muted); }
+.saved-note { font-size: 12px; color: var(--ok); }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.form-actions .primary { min-width: 96px; }
 .foot-link { margin-top: 14px; }
 
 /* Full view: the same UI opened in a normal browser tab. */

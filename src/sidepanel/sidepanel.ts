@@ -42,7 +42,9 @@ const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySe
 
 const profileSel = $<HTMLSelectElement>("#profile");
 const setupBox = $("#setup");
-const profileForm = $("#profile-form");
+const profileCard = $("#profile-form");
+const profileForm = $<HTMLFormElement>("#profile-edit");
+const profileView = $("#profile-view");
 const profileSaved = $("#profile-saved");
 
 const params = new URLSearchParams(location.search);
@@ -51,7 +53,12 @@ const isFull = params.get("view") === "full";
 document.body.classList.toggle("full", isFull);
 
 let settings: Settings;
-let profileTimer: number | undefined;
+/** The business card shows a compact row until the owner clicks Edit. */
+let editing = false;
+/** True while the form has changes that are not saved yet. */
+let dirty = false;
+/** The business the form belongs to. */
+let editingFor = "";
 
 function openSettings(e?: Event) {
   e?.preventDefault();
@@ -67,8 +74,18 @@ function render(s: Settings) {
 
   const profile = activeProfile(s);
   $("#profile-empty").hidden = !!profile;
-  profileForm.hidden = !profile;
-  if (profile) fillProfileFields(profileForm, profile);
+  profileCard.hidden = !profile;
+  if (profile) {
+    if (profile.id !== editingFor) {
+      // Another business: start closed, unless it has no name yet.
+      editingFor = profile.id;
+      editing = !profile.businessName.trim();
+      dirty = false;
+      profileSaved.textContent = "";
+    }
+    if (!dirty) fillProfileFields(profileForm, profile);
+    showProfileMode();
+  }
   renderHistory();
   renderReports();
 
@@ -514,34 +531,60 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (changes[monthsKey(profile.id)] || changes[yearsKey(profile.id)] || changes[collectKey(profile.id)]) renderReports();
 });
 
-/** Saves the profile shortly after typing stops. Reads the fields at save time so no keystroke is lost. */
-function saveProfile(now = false) {
-  clearTimeout(profileTimer);
-  profileTimer = undefined;
-  profileSaved.textContent = "Saving…";
-  const run = async () => {
-    profileTimer = undefined;
-    const p = activeProfile(settings);
-    if (!p) return;
-    readProfileFields(profileForm, p);
-    await saveSettings(settings);
-    profileSaved.textContent = "Saved";
-  };
-  if (now) return run();
-  profileTimer = window.setTimeout(run, 400);
+/* ---------- Business profile ---------- */
+
+/** Shows the compact row (name + Edit) or the form (fields + Save). */
+function showProfileMode() {
+  const p = settings && activeProfile(settings);
+  if (!p) return;
+  profileView.hidden = editing;
+  profileForm.hidden = !editing;
+  $("#pv-name").textContent = p.businessName || "(unnamed business)";
+  $("#pv-type").textContent = [p.businessType, p.reportLanguage && `reports in ${p.reportLanguage}`].filter(Boolean).join(" · ");
 }
 
-bindProfileFields(profileForm, (field, value) => {
-  if (field === "businessName") {
-    const opt = profileSel.selectedOptions[0];
-    if (opt) opt.text = value || "(unnamed business)";
-  }
+$("#edit-profile").addEventListener("click", () => {
+  editing = true;
+  profileSaved.textContent = "";
+  showProfileMode();
+  $<HTMLInputElement>("#p-businessName").focus();
+});
+
+$("#cancel-profile").addEventListener("click", () => {
+  const p = activeProfile(settings);
+  if (!p) return;
+  dirty = false;
+  editing = !p.businessName.trim();
+  fillProfileFields(profileForm, p);
+  showProfileMode();
+});
+
+/** Saves the form into the selected business. */
+async function saveProfile() {
+  const p = activeProfile(settings);
+  if (!p) return;
+  readProfileFields(profileForm, p);
+  dirty = false;
+  editing = false;
+  await saveSettings(settings);
+  profileSaved.textContent = "Saved";
+  showProfileMode();
+}
+
+profileForm.addEventListener("submit", (e) => {
+  e.preventDefault();
   saveProfile();
 });
 
+bindProfileFields(profileForm, () => {
+  dirty = true;
+  profileSaved.textContent = "";
+});
+
 profileSel.addEventListener("change", async () => {
-  // Finish saving edits to the previous business before switching.
-  if (profileTimer !== undefined) await saveProfile(true);
+  const p = activeProfile(settings);
+  if (dirty && p && confirm(`Save your changes to "${p.businessName || "this business"}" first?`)) await saveProfile();
+  dirty = false;
   await saveSettings({ ...settings, activeProfileId: profileSel.value });
 });
 
