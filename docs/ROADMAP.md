@@ -11,6 +11,7 @@ is discussed before it is built.
 | 0.2.0 | Floating ✨ button on Google review pages; side panel for editing the business profile; full view in a wide tab. The side panel's Reply tab and the right-click menu were removed. |
 | 0.2.1 | Fixed extension ID, so updates keep saved settings even when the new version is in a different folder. |
 | 0.3.0 | Phase 2 steps 2.1–2.3: review history, urgent topics, report language, monthly reports in a 📊 Reports tab, Save as PDF, and Export / Import everything. |
+| 0.4.0 | Step 2.4 yearly report with charts and PDF; Tripadvisor and Facebook support; several sites per business; new design. |
 
 ---
 
@@ -78,7 +79,7 @@ Since old raw reviews are deleted, real use stays much lower.
   (the API key only if the owner chooses to include it), review history and reports. Import asks before replacing
   anything.
 
-#### Step 2.4: Yearly report, charts and PDF ✅ unreleased
+#### Step 2.4: Yearly report, charts and PDF ✅ 0.4.0
 - The yearly report is built from the monthly reports, and compared with the previous year when it exists. Missing
   monthly reports are made first. An unfinished year gets a report of the months so far.
 - Charts in the yearly report: reviews per month and average stars per month, as two separate charts. This month's
@@ -108,8 +109,8 @@ Since old raw reviews are deleted, real use stays much lower.
 
 ## More review sites
 
-- ✅ Tripadvisor (owner pages, English). Unreleased.
-- ✅ Facebook (page Reviews tab, English and Lithuanian). Unreleased.
+- ✅ Tripadvisor (owner pages, English). 0.4.0.
+- ✅ Facebook (page Reviews tab, English and Lithuanian). 0.4.0.
 - Later, when a client needs it: TheFork. Replying needs the restaurant's TheFork Manager login; ask the owner for
   one login or a saved page to build the reader against. Scores out of 10 become 1–5 stars.
 

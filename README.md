@@ -195,7 +195,7 @@ test/                  unit tests and sample reviews
 ## Limitations
 
 - Google's review pages change without notice. If the draft bar stops appearing, the code that reads reviews needs updating. It is in [src/content/extract.ts](src/content/extract.ts).
-- The content script runs on `google.com`, `google.lt`, `google.co.uk`, `google.ie`, `google.de`, `business.google.com` Tripadvisor's `.com`, `.nl`, `.co.uk`, `.ie` and `.de`, and `facebook.com`. Add other country domains in [public/manifest.json](public/manifest.json).
+- The content script runs on `google.com`, `google.lt`, `google.co.uk`, `google.ie`, `google.de`, `business.google.com`, Tripadvisor's `.com`, `.nl`, `.co.uk`, `.ie` and `.de`, and `facebook.com`. Add other country domains in [public/manifest.json](public/manifest.json).
 - Tripadvisor is read in English. Its months count as complete when the list is sorted by **Most recent**, without filters, and the pages are opened in order from page 1.
 - Facebook has no stars: reviews count as "recommends" or "doesn't recommend", and reports show the share that recommends. Facebook is read in English or Lithuanian. Reviews are collected only on the page's **Reviews** tab; scroll down to collect older ones.
 - A business uses only the sites whose reviews were opened for it. When a month is still missing on one of them, the Reports tab offers to open that site or make the report without it.

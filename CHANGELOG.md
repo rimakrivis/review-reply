@@ -4,7 +4,7 @@ All notable changes to ReviewReply are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.4.0] - 2026-10-14
 
 ### Added
 - **Yearly report.** Pick a year at the top of the report list in the **Reports** tab. It is built from that
@@ -95,6 +95,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - First release: AI-drafted replies to Google reviews, business profiles with a situations playbook, templates,
   side panel, settings page and demo page.
 
+[0.4.0]: https://github.com/rimakrivis/review-reply/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/rimakrivis/review-reply/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/rimakrivis/review-reply/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/rimakrivis/review-reply/compare/v0.1.0...v0.2.0
